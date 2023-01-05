@@ -11,8 +11,8 @@ class PartitionImages:
         self.imgsPath = os.path.join(os.getcwd(), 'data', 'high_resolution_images')
         self.PImgsPath = os.path.join(os.getcwd(), 'data', 'partitioned_images')
         self.fullResolutionImgsPath = None
-        self.rowsPImg = 264
-        self.columnsPImg = 264
+        self.rowsPImg = 528
+        self.columnsPImg = 528
 
     def partitionImage(self):
         self.readImagesList()
@@ -24,10 +24,7 @@ class PartitionImages:
         for imgPath in self.fullResolutionImgsPath:
             imgName = os.path.basename(imgPath).split('.')[0]
             img = cv2.imread(imgPath)
-            rows, columns, channels = img.shape
-            rowsRegions = img.shape[0] // self.rowsPImg
-            columnsRegions = img.shape[1] // self.columnsPImg
-            PImgs = img.reshape(-1, rowsRegions, self.rowsPImg, columnsRegions, self.columnsPImg).transpose(1, 3, 0, 2, 4).reshape(-1, self.rowsPImg, self.columnsPImg, channels)
+            PImgs = [img[x:x+self.rowsPImg, y:y+self.columnsPImg] for x in range(0, img.shape[0], self.rowsPImg) for y in range(0, img.shape[1], self.columnsPImg)]
             for i in range(len(PImgs)):
                 PImgName = imgName + '_' + str(i + 1) + '.jpg'
                 PImgPath = os.path.join(self.PImgsPath, PImgName)
