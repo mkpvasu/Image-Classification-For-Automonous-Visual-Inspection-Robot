@@ -1,11 +1,13 @@
 from __future__ import print_function, division
 import os
 import glob
+import numpy as np
+import matplotlib.pyplot as plt
 from torch.utils import data
 from torchvision.models import resnet50
 from skimage import io
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
+from torchvision import transforms, utils
 from torch.optim import SGD
 
 
@@ -40,28 +42,28 @@ class SandingCanopyDataset(Dataset):
             image = self.transformation(npImg)
         else:
             image = self.convertToTensor(npImg)
-        return (image, label)
+        return image, label
 
 
 class ImagesAndLabels:
-    def __int__(self):
+    def __init__(self):
         super(ImagesAndLabels, self).__init__()
         self.datasetPath = os.path.join(os.getcwd(), "data", "dataset")
-        self.trainRatio = 0.75
-        self.valRatio = 0.15
-        self.testRatio = 0.1
+        self.trainRatio = 0.5
+        self.valRatio = 0.25
+        self.testRatio = 0.25
 
     def combineImagesAndLabels(self):
         allImages = []
-        subFolders = [subFolder.path for subFolder in os.scandir(self.datasetPath) if subFolder.isdir()]
+        subFolders = [subFolder.path for subFolder in os.scandir(self.datasetPath) if subFolder.is_dir()]
 
         label = None
         for subFolder in subFolders:
-            if subFolder == "unsatisfactory":
+            if os.path.basename(subFolder) == "unsatisfactory":
                 label = 0.0
-            elif subFolder == "moderatelysatisfactory":
+            elif os.path.basename(subFolder) == "moderatelysatisfactory":
                 label = 1.0
-            elif subFolder == "satisfactory":
+            elif os.path.basename(subFolder) == "satisfactory":
                 label = 2.0
 
             imagePaths = glob.glob(os.path.join(self.datasetPath, subFolder, "*.jpg"))
@@ -69,7 +71,7 @@ class ImagesAndLabels:
                 if label is not None:
                     allImages.append([imagePath, label])
                 else:
-                    raise InvalidLabel().__init__()
+                    raise InvalidLabel()
 
         return allImages
 
@@ -81,14 +83,38 @@ class ImagesAndLabels:
 
 class TrainingModel:
     def __init__(self):
-        trainData, valData, testData = ImagesAndLabels.trainValTestSplit()
-        trainLoader = DataLoader(dataset=trainData, batch_size=64, shuffle=True, num_workers=4)
-        valLoader = DataLoader(dataset=valData, batch_size=64, shuffle=True, num_workers=4)
-        testLoader = DataLoader(dataset=testData, batch_size=64, shuffle=True, num_workers=4)
-        classes = ("unsatisfactory", "moderatelysatisfactory", "satisfactory")
+        trainData, valData, testData = ImagesAndLabels().trainValTestSplit()
+        print(len(trainData))
+        print(len(valData))
+        print(len(testData))
+        self.batchSize = 64
+        self.trainLoader = DataLoader(dataset=trainData, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.valLoader = DataLoader(dataset=valData, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.testLoader = DataLoader(dataset=testData, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.classes = ("unsatisfactory", "moderatelysatisfactory", "satisfactory")
 
-    for images, labels in datasetLoader:
-        Resnet50 = resnet50()
+    def imshow(self, img):
+        img = img / 2 + 0.5  # unnormalize
+        npImg = img.numpy()
+        plt.imshow(np.transpose(npImg, (1, 2, 0)))
+        plt.show()
+
+    def displayImages(self):
+        dataiter = iter(self.trainLoader)
+        images, labels = next(dataiter)
+
+        # show images
+        self.imshow(utils.make_grid(images))
+        # print labels
+        print(' '.join(f'{self.classes[labels[j]]:5s}' for j in range(self.batchSize)))
+
+
+def main():
+    TrainingModel().displayImages()
+
+
+if __name__ == "__main__":
+    main()
 
 
 
