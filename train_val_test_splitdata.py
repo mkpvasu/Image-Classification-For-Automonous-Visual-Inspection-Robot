@@ -1,7 +1,6 @@
 # IMPORTING NECESSARY LIBRARIES
 import os
 import glob
-import torch
 import shutil
 from torch.utils import data
 
