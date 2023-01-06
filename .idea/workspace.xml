@@ -6,6 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="d71b912b-0664-423e-b59a-6023ab7dcc95" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/dataset/moderatelysatisfactory/capt0000_3.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/dataset/moderatelysatisfactory/capt0000_4.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/dataset/unsatisfactory/capt0000_1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/dataset/unsatisfactory/capt0000_2.jpg" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/training_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/training_model.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -57,6 +61,17 @@
     </task>
     <servers />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
@@ -65,8 +80,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/training_model.py</url>
-          <line>103</line>
-          <option name="timeStamp" value="6" />
+          <line>104</line>
+          <option name="timeStamp" value="9" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
