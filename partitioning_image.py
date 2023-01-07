@@ -2,7 +2,6 @@ import os
 import glob
 import cv2
 import shutil
-import numpy as np
 
 
 class PartitionImages:
