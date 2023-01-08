@@ -96,6 +96,29 @@ class SandingCanopyDataset(Dataset):
         return image, label
 
 
+class LoaderVisualization:
+    def __init__(self, dataloader, classes):
+        self.dataLoader = dataloader
+        self.classes = classes
+
+    def showImg(self, img):
+        img = img
+        npimg = img.numpy()
+        npimg = np.transpose(npimg, (1, 2, 0))
+        return npimg
+
+    def imgAndLabelVisualization(self):
+        dataiter = iter(self.dataLoader)
+        images, labels = next(dataiter)
+        # Viewing data examples used for training
+        fig, axis = plt.subplots(3, 5, figsize=(15, 10))
+        for i, ax in enumerate(axis.flat):
+            image, label = images[i], labels[i]
+            ax.imshow(self.showImg(image))
+            ax.set(title=f"{self.classes[label.item()]}")
+        plt.show()
+
+
 class TrainingModel:
     def __init__(self):
         self.batchSize = 16
@@ -117,26 +140,12 @@ class TrainingModel:
         # CATEGORICAL ENCODING OF CLASSES
         self.classes = {0.0: "unsatisfactory", 1.0: "moderatelysatisfactory", 2.0: "satisfactory"}
 
-    def showImg(self, img):
-        img = img
-        npimg = img.numpy()
-        npimg = np.transpose(npimg, (1, 2, 0))
-        return npimg
-
-    def imgAndLabelVisualization(self):
-        dataiter = iter(self.valLoader)
-        images, labels = next(dataiter)
-        # Viewing data examples used for training
-        fig, axis = plt.subplots(3, 5, figsize=(15, 10))
-        for i, ax in enumerate(axis.flat):
-            image, label = images[i], labels[i]
-            ax.imshow(self.showImg(image))
-            ax.set(title=f"{self.classes[label.item()]}")
-        plt.show()
+        # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
+        LoaderVisualization(self.valLoader, self.classes).imgAndLabelVisualization()
 
 
 def main():
-    TrainingModel().imgAndLabelVisualization()
+    TrainingModel()
 
 
 if __name__ == "__main__":
