@@ -3,9 +3,9 @@ import cv2
 
 
 class PartitionImages:
-    def __init__(self):
+    def __init__(self, image):
         super(PartitionImages, self).__init__()
-        self.capturedImgName = "image_1.jpg"
+        self.capturedImgName = image
         self.capturedImgPath = None
         self.PImgsPath = os.path.join(os.getcwd(), 'Partitioned_Images')
         self.rowsPImg = 528

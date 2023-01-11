@@ -1,6 +1,9 @@
 from __future__ import print_function, division
 import os
 import glob
+import time
+import copy
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,11 +11,12 @@ from sklearn.model_selection import train_test_split
 
 import torch
 from PIL import Image
-from torch.utils import data
+import torch.nn as nn
+from torch import optim
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+from torchvision.models import resnet50
+from torch.optim import lr_scheduler
 
 
 class InvalidLabel(Exception):
@@ -101,17 +105,19 @@ class LoaderVisualization:
         self.dataLoader = dataloader
         self.classes = classes
 
+    # CONVERT IMAGE FROM FLAT IMAGE BACK TO ORIGINAL IMAGE
     def showImg(self, img):
         img = img
         npimg = img.numpy()
         npimg = np.transpose(npimg, (1, 2, 0))
         return npimg
 
+    # DISPLAY IMAGES IN THE DATALOADER WITH LABELS
     def imgAndLabelVisualization(self):
         dataiter = iter(self.dataLoader)
         images, labels = next(dataiter)
         # Viewing data examples used for training
-        fig, axis = plt.subplots(3, 5, figsize=(15, 10))
+        fig, axis = plt.subplots(4, 5, figsize=(15, 10))
         for i, ax in enumerate(axis.flat):
             image, label = images[i], labels[i]
             ax.imshow(self.showImg(image))
@@ -119,13 +125,20 @@ class LoaderVisualization:
         plt.show()
 
 
+# CLASS TO TRAIN RESNET MODEL ON INPUT DATASET
 class TrainingModel:
-    def __init__(self):
-        self.batchSize = 16
+    def __init__(self, batch_size):
+
+        # SELECT GPU IF AVAILABLE ELSE CPU
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        # SIZE OF THE BATCH
+        self.batchSize = batch_size
 
         # PREPARATION OF TRAIN, VAL AND TEST DATA FOR DATASET CONVERSION
         self.trainDataToDataset, self.valDataToDataset = TrainData().trainValDataPrep()
         self.testDataToDataset = TestData().testDataPrep()
+        self.datasetSize = {"train": len(self.trainDataToDataset), "val": len(self.valDataToDataset)}
 
         # CONVERT PREPARED DATA INTO DATASET
         self.trainData = SandingCanopyDataset(self.trainDataToDataset)
@@ -136,12 +149,112 @@ class TrainingModel:
         self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=4)
         self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=4)
         self.testLoader = DataLoader(dataset=self.testData, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.dataLoaders = {"train": len(self.trainDataToDataset), "val": len(self.valDataToDataset)}
 
         # CATEGORICAL ENCODING OF CLASSES
         self.classes = {0.0: "unsatisfactory", 1.0: "moderatelysatisfactory", 2.0: "satisfactory"}
 
+        # TRACK LOSS AND ACCURACY FOR EACH EPOCH
+        self.Loss = {"train": [], "val": []}
+        self.Accuracy = {"train": [], "val": []}
+
         # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
         LoaderVisualization(self.valLoader, self.classes).imgAndLabelVisualization()
+
+    def trainModel(self, model=resnet50(), loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, lr_scheduler, n_epochs=10):
+        # LOAD MODEL
+        model = model(weights=None)
+
+        # EPOCHS TO BE TRAINED
+        epochs = n_epochs
+
+        # LOSS FUNCTION
+        criterion = loss
+
+        # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
+        optimizer = optimizer(model.parameters(), lr=0.001)
+
+        # UPDATE LEARNING RATE USING SCHEDULER
+        scheduler = lr_scheduler
+
+        # TO ANALYZE THE DURATION OF TRAINING MODEL
+        startTime = time.time()
+
+        # TO KEEP TRACK OF BEST MODEL WEIGHT
+        bestModelWeights = copy.deepcopy(model.state_dict())
+
+        # BEST ACCURACY
+        bestAcc = 0.0
+
+        # TRAINING MODEL FOR MENTIONED EPOCHS
+        for epoch in range(epochs):
+            print(f"Epoch {epoch + 1}")
+            print("=" * 15)
+
+            for mode in ["train", "val"]:
+                if mode == "train":
+                    model.train()
+                else:
+                    model.eval()
+
+                runningLoss = 0.0
+                runningCorrects = 0
+
+                for batchIdx, (images, labels) in enumerate(self.dataLoaders[mode]):
+                    images = images.to_device(self.device)
+                    labels = labels.to_device(self.device)
+
+                    # INITIALIZE GRADIENTS TO BE ZERO
+                    optimizer.zero_grad()
+
+                    # FORWARD PASSING IMAGES TO TRAIN
+                    with torch.set_grad_enabled(mode == "train"):
+                        output = model(images)
+                        _, predictions = torch.max(output, dim=1)
+                        loss = criterion(predictions, labels)
+
+                        # BACKPROPAGATION AND UPDATE PARAMETERS DURING TRAIN
+                        if mode == "train":
+                            loss.backward()
+                            optimizer.step()
+
+                    # PRINT BATCH LOSS
+
+
+                    # CALCULATE OVERALL LOSS
+                    runningLoss += loss.item() * images.size(0)
+                    runningCorrects += torch.sum(predictions == labels.data)
+
+                    if batchIdx % 5 == 0:
+                        print(f"    Batch [{batchIdx}/{len(self.dataLoaders[mode])}], Batch Loss: {loss.item():.4f}, "
+                              f"Batch Accuracy: {}")
+
+                if model == "train":
+                    scheduler.step()
+
+                epochLoss = runningLoss / self.datasetSize[mode]
+                self.Loss[mode].append(epochLoss)
+                epochAccuracy = runningCorrects / self.datasetSize[mode]
+                self.Accuracy[mode].append(epochAccuracy)
+
+                if mode == "train":
+                    phase = "Train"
+                else:
+                    phase = "Validation"
+
+                print(f"{phase}, Epoch Loss: {epochLoss}, Epoch Accuracy: {epochAccuracy}\n\n")
+
+                # COPY WEIGHTS TO BEST MODEL WEIGHTS FOR HIGHEST ACCURACY EPOCHS
+                if (mode == "val") and (epochAccuracy > bestAcc):
+                    bestAcc = epochAccuracy
+                    bestModelWeights = copy.deepcopy(model.state_dict())
+
+        timeElapsed = time.time() - startTime
+        print(f"Training Completed in {timeElapsed // 60}mins {timeElapsed % 60}secs")
+
+        # LOAD BEST WEIGHTS
+        model.load_state_dict(bestModelWeights)
+        return model
 
 
 def main():
