@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d71b912b-0664-423e-b59a-6023ab7dcc95" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/partitioning_image_ros_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/partitioning_image_ros_node.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/training_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/training_model.py" afterDir="false" />
-    </list>
+    <list default="true" id="0da978e5-47da-4fa3-8411-c265d67b5966" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
