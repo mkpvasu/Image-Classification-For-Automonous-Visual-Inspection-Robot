@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 
 import torch
 from PIL import Image
-import torch.nn as nn
+from torch import nn
 from torch import optim
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
@@ -146,10 +146,10 @@ class TrainingModel:
         self.testData = SandingCanopyDataset(self.testDataToDataset)
 
         # LOAD DATA INTO TRAIN, VAL AND TEST DATALOADERS
-        self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=4)
-        self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=4)
-        self.testLoader = DataLoader(dataset=self.testData, batch_size=self.batchSize, shuffle=True, num_workers=4)
-        self.dataLoaders = {"train": len(self.trainDataToDataset), "val": len(self.valDataToDataset)}
+        self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=2)
+        self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=2)
+        self.testLoader = DataLoader(dataset=self.testData, batch_size=self.batchSize, shuffle=True, num_workers=2)
+        self.dataLoaders = {"train": self.trainLoader, "val": self.valLoader}
 
         # CATEGORICAL ENCODING OF CLASSES
         self.classes = {0.0: "unsatisfactory", 1.0: "moderatelysatisfactory", 2.0: "satisfactory"}
@@ -159,9 +159,9 @@ class TrainingModel:
         self.EpochAccuracy = {"train": [], "val": []}
 
         # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
-        LoaderVisualization(self.valLoader, self.classes).imgAndLabelVisualization()
+        # LoaderVisualization(self.valLoader, self.classes).imgAndLabelVisualization()
 
-    def trainModel(self, model=resnet50(), loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
+    def trainModel(self, model=resnet50, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
         # LOAD MODEL
         model = model(weights=None)
 
@@ -188,8 +188,8 @@ class TrainingModel:
 
         # TRAINING MODEL FOR MENTIONED EPOCHS
         for epoch in range(epochs):
-            print(f"Epoch {epoch + 1} / {len(epochs)}")
-            print("=" * 15)
+            print(f"Epoch {epoch + 1} / {epochs}")
+            print("=" * 100)
 
             for mode in ["train", "val"]:
                 if mode == "train":
@@ -201,17 +201,17 @@ class TrainingModel:
                 runningCorrects = 0
 
                 for batchIdx, (images, labels) in enumerate(self.dataLoaders[mode]):
-                    images = images.to_device(self.device)
-                    labels = labels.to_device(self.device)
+                    images = images.to(self.device)
+                    labels = labels.type(torch.LongTensor).to(self.device)
 
                     # INITIALIZE GRADIENTS TO BE ZERO
                     optimizer.zero_grad()
 
                     # FORWARD PASSING IMAGES
                     with torch.set_grad_enabled(mode == "train"):
-                        output = model(images)
-                        loss = criterion(predictions, labels)
-                        _, predictions = torch.max(output, dim=1)
+                        outputs = model(images)
+                        loss = criterion(outputs, labels)
+                        _, predictions = torch.max(outputs, dim=1)
 
                         # BACKPROPAGATION AND UPDATE PARAMETERS DURING TRAIN
                         if mode == "train":
@@ -219,9 +219,9 @@ class TrainingModel:
                             optimizer.step()
 
                     # PRINT BATCH LOSS
-                    if batchIdx % 5 == 0:
+                    if (mode == "val") and (batchIdx % 5 == 0):
                         print(f"Batch [{batchIdx}/{len(self.dataLoaders[mode])}]: Batch Loss: {loss.item():.4f}, "
-                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data)/predictions.size(0))}")
+                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data).item()/predictions.size(0)):.4f}")
 
                     # CALCULATE TOTAL LOSS AND CORRECTS OF EPOCH
                     runningLoss += loss.item() * images.size(0)
@@ -232,19 +232,20 @@ class TrainingModel:
 
                 epochLoss = runningLoss / self.datasetSize[mode]
                 self.EpochLoss[mode].append(epochLoss)
-                epochAccuracy = runningCorrects / self.datasetSize[mode]
-                self.EpochAccuracy[mode].append(100 * epochAccuracy)
+                epochAccuracy = 100 * (runningCorrects / self.datasetSize[mode])
+                self.EpochAccuracy[mode].append(epochAccuracy)
 
                 if mode == "train":
                     phase = "Training"
                 else:
                     phase = "Validation"
 
-                print(f"--- {phase} ----\nEpoch Loss: {self.EpochLoss[mode][epoch]}, Epoch Accuracy: {self.EpochAccuracy[mode][epoch]}\n\n")
+                print(f"\n--- {phase} ----\nEpoch Loss: {self.EpochLoss[mode][epoch]:.4f}, "
+                      f"Epoch Accuracy: {self.EpochAccuracy[mode][epoch]:.4f}")
 
                 # COPY WEIGHTS TO BEST MODEL WEIGHTS FOR HIGHEST ACCURACY EPOCHS
-                if self.EpochAccuracy["val"][epoch] > bestAcc:
-                    print("\n--- Model Performance Improved: Saving Weights ---\n")
+                if (mode == "val") and (self.EpochAccuracy[mode][epoch] > bestAcc):
+                    print("\n--- Model Performance Improved: Saving Weights ---\n\n")
                     bestAcc = epochAccuracy
                     bestModelWeights = copy.deepcopy(model.state_dict())
 
@@ -257,7 +258,7 @@ class TrainingModel:
 
 
 def main():
-    model = TrainingModel().trainModel()
+    model = TrainingModel(batch_size=8).trainModel()
 
 
 if __name__ == "__main__":
