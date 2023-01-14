@@ -15,7 +15,7 @@ from torch import nn
 from torch import optim
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
-from torchvision.models import resnet50
+from torchvision.models import resnet50, ResNet50_Weights
 from torch.optim import lr_scheduler
 
 
@@ -66,19 +66,6 @@ class TrainData:
         return trainData, valData
 
 
-class TestData:
-    def __init__(self):
-        super().__init__()
-
-        # CHANGE TEST DATA PATH ACCORDING TO SET UP
-        self.testDataPath = os.path.join(os.getcwd(), "data", "dataset_for_model", "test_data")
-
-    def testDataPrep(self):
-        testImages = ImagesAndLabels(self.testDataPath).appendImagesAndLabels()
-        testData = pd.DataFrame(testImages, columns=["ImageName", "Label"])
-        return testData
-
-
 class SandingCanopyDataset(Dataset):
     def __init__(self, dataToDataset):
         self.data = dataToDataset
@@ -127,7 +114,7 @@ class LoaderVisualization:
 
 # CLASS TO TRAIN RESNET MODEL ON INPUT DATASET
 class TrainingModel:
-    def __init__(self, batch_size):
+    def __init__(self, batch_size=8):
 
         # SELECT GPU IF AVAILABLE ELSE CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -137,18 +124,14 @@ class TrainingModel:
 
         # PREPARATION OF TRAIN, VAL AND TEST DATA FOR DATASET CONVERSION
         self.trainDataToDataset, self.valDataToDataset = TrainData().trainValDataPrep()
-        self.testDataToDataset = TestData().testDataPrep()
-        self.datasetSize = {"train": len(self.trainDataToDataset), "val": len(self.valDataToDataset)}
 
         # CONVERT PREPARED DATA INTO DATASET
         self.trainData = SandingCanopyDataset(self.trainDataToDataset)
         self.valData = SandingCanopyDataset(self.valDataToDataset)
-        self.testData = SandingCanopyDataset(self.testDataToDataset)
 
         # LOAD DATA INTO TRAIN, VAL AND TEST DATALOADERS
         self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=2)
         self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=2)
-        self.testLoader = DataLoader(dataset=self.testData, batch_size=self.batchSize, shuffle=True, num_workers=2)
         self.dataLoaders = {"train": self.trainLoader, "val": self.valLoader}
 
         # CATEGORICAL ENCODING OF CLASSES
@@ -161,9 +144,12 @@ class TrainingModel:
         # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
         # LoaderVisualization(self.valLoader, self.classes).imgAndLabelVisualization()
 
-    def trainModel(self, model=resnet50, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
+    def outputTrainedModel(self, model=resnet50, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
+        return self.trainModel(model, loss, optimizer, n_epochs)
+
+    def trainModel(self, model, loss, optimizer, n_epochs):
         # LOAD MODEL
-        model = model(weights=None)
+        model = model(weights=ResNet50_Weights.IMAGENET1K_V2)
 
         # EPOCHS TO BE TRAINED
         epochs = n_epochs
@@ -199,6 +185,7 @@ class TrainingModel:
 
                 runningLoss = 0.0
                 runningCorrects = 0
+                runningTotal = 0
 
                 for batchIdx, (images, labels) in enumerate(self.dataLoaders[mode]):
                     images = images.to(self.device)
@@ -219,14 +206,14 @@ class TrainingModel:
                             optimizer.step()
 
                     # PRINT BATCH LOSS
-                    if (mode == "val") and (batchIdx % 5 == 0):
+                    if (mode == "train") and (batchIdx % 5 == 0):
                         print(f"Batch [{batchIdx}/{len(self.dataLoaders[mode])}]: Batch Loss: {loss.item():.4f}, "
-                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data).item()/predictions.size(0)):.4f}")
+                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data).item()/labels.size(0)):.4f}")
 
                     # CALCULATE TOTAL LOSS AND CORRECTS OF EPOCH
                     runningLoss += loss.item() * images.size(0)
                     runningCorrects += torch.sum(predictions == labels.data)
-
+                    runningTotal +=
                 if model == "train":
                     scheduler.step()
 
@@ -254,11 +241,12 @@ class TrainingModel:
 
         # LOAD BEST WEIGHTS
         model.load_state_dict(bestModelWeights)
+
         return model
 
 
 def main():
-    model = TrainingModel(batch_size=8).trainModel()
+    resnet50Model = TrainingModel().trainModel()
 
 
 if __name__ == "__main__":

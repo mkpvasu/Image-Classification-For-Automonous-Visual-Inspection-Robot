@@ -5,7 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0da978e5-47da-4fa3-8411-c265d67b5966" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/imageClassification.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/imageClassification.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_predictions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/testing_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/training_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/training_model.py" afterDir="false" />
     </list>
@@ -33,7 +34,7 @@
     "ASKED_ADD_EXTERNAL_FILES": "true",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/MACS Lab Project/imageClassification",
+    "last_opened_file_path": "G:/Macs Lab/imageClassification",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
   },
   "keyToStringList": {
@@ -52,13 +53,14 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="G:\Macs Lab\imageClassification" />
       <recent name="C:\MACS Lab Project\imageClassification" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="d71b912b-0664-423e-b59a-6023ab7dcc95" name="Changes" comment="" />
+      <changelist id="0da978e5-47da-4fa3-8411-c265d67b5966" name="Changes" comment="" />
       <created>1672857815095</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
