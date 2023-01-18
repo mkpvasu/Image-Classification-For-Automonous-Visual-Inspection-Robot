@@ -130,8 +130,8 @@ class TrainingModel:
         self.valData = SandingCanopyDataset(self.valDataToDataset)
 
         # LOAD DATA INTO TRAIN, VAL AND TEST DATALOADERS
-        self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=2)
-        self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=2)
+        self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=4)
         self.dataLoaders = {"train": self.trainLoader, "val": self.valLoader}
 
         # CATEGORICAL ENCODING OF CLASSES
@@ -158,7 +158,7 @@ class TrainingModel:
         criterion = loss
 
         # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
-        optimizer = optimizer(model.parameters(), lr=0.001)
+        optimizer = optimizer(model.parameters(), lr=0.005)
 
         # UPDATE LEARNING RATE USING SCHEDULER
         scheduler = lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.95)
@@ -175,7 +175,7 @@ class TrainingModel:
         # TRAINING MODEL FOR MENTIONED EPOCHS
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1} / {epochs}")
-            print("=" * 100)
+            print("=" * 100, "\n")
 
             for mode in ["train", "val"]:
                 if mode == "train":
@@ -205,21 +205,22 @@ class TrainingModel:
                             loss.backward()
                             optimizer.step()
 
-                    # PRINT BATCH LOSS
+                    # # PRINT BATCH LOSS
                     if (mode == "train") and (batchIdx % 5 == 0):
                         print(f"Batch [{batchIdx}/{len(self.dataLoaders[mode])}]: Batch Loss: {loss.item():.4f}, "
-                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data).item()/labels.size(0)):.4f}")
+                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data)/len(labels)):.4f}")
 
                     # CALCULATE TOTAL LOSS AND CORRECTS OF EPOCH
                     runningLoss += loss.item() * images.size(0)
                     runningCorrects += torch.sum(predictions == labels.data)
-                    runningTotal +=
+                    runningTotal += len(labels.data)
+
                 if model == "train":
                     scheduler.step()
 
-                epochLoss = runningLoss / self.datasetSize[mode]
+                epochLoss = runningLoss / runningTotal
                 self.EpochLoss[mode].append(epochLoss)
-                epochAccuracy = 100 * (runningCorrects / self.datasetSize[mode])
+                epochAccuracy = 100 * (runningCorrects / runningTotal)
                 self.EpochAccuracy[mode].append(epochAccuracy)
 
                 if mode == "train":
@@ -228,7 +229,7 @@ class TrainingModel:
                     phase = "Validation"
 
                 print(f"\n--- {phase} ----\nEpoch Loss: {self.EpochLoss[mode][epoch]:.4f}, "
-                      f"Epoch Accuracy: {self.EpochAccuracy[mode][epoch]:.4f}")
+                      f"Epoch Accuracy: {self.EpochAccuracy[mode][epoch]:.4f}\n")
 
                 # COPY WEIGHTS TO BEST MODEL WEIGHTS FOR HIGHEST ACCURACY EPOCHS
                 if (mode == "val") and (self.EpochAccuracy[mode][epoch] > bestAcc):
@@ -237,7 +238,9 @@ class TrainingModel:
                     bestModelWeights = copy.deepcopy(model.state_dict())
 
         timeElapsed = time.time() - startTime
-        print(f"Training and Validation Completed in {timeElapsed // 60} minutes and {timeElapsed % 60} secs")
+        print("\n", "*" * 100)
+        print(f"\nTraining and Validation Completed in {timeElapsed // 60} minutes and {timeElapsed % 60} secs\n")
+        print("*" * 100, "\n")
 
         # LOAD BEST WEIGHTS
         model.load_state_dict(bestModelWeights)
@@ -245,12 +248,12 @@ class TrainingModel:
         return model
 
 
-def main():
-    resnet50Model = TrainingModel().trainModel()
-
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     resnet50Model = TrainingModel().trainModel()
+#
+#
+# if __name__ == "__main__":
+#     main()
 
 
 

@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import DataLoader
-from training_model import SandingCanopyDataset, TrainingModel
+from sklearn.metrics import f1_score
+from training_model import ImagesAndLabels, SandingCanopyDataset, TrainingModel
 
 
 class TestData:
@@ -19,9 +20,9 @@ class TestData:
         self.testDataPath = os.path.join(os.getcwd(), "data", "dataset_for_model", "test_data")
 
     def testDataPrep(self):
-        testImages = glob.glob(os.path.join(self.testDataPath, "**", "*.jpg"))
+        testImages = ImagesAndLabels(self.testDataPath).appendImagesAndLabels()
         testData = pd.DataFrame(testImages, columns=["ImageName", "Label"])
-        return testImages
+        return testData
 
 
 class TestingModel:
@@ -34,12 +35,12 @@ class TestingModel:
         self.batchSize = batch_size
 
         # CONVERT IMAGES AND LABELS TO LOADABLE DATASET FOR MODEL
-        self.testDataToDataset = TestData.testDataPrep()
+        self.testDataToDataset = TestData().testDataPrep()
         self.testData = SandingCanopyDataset(self.testDataToDataset)
         self.testLoader = DataLoader(dataset=self.testData, batch_size=self.batchSize, shuffle=True, num_workers=2)
 
         # TRAINING DEEP LEARNING MODEL
-        self.trainedModel = TrainingModel(batch_size=16).outputTrainedModel()
+        self.trainedModel = TrainingModel(batch_size=8).outputTrainedModel()
 
     # TEST TRAINED MODEL WITH TESTING DATA AND TAKE THE TEST ACCURACY FOR FINAL MODEL PERFORMANCE
     def testAccuracy(self):
@@ -63,12 +64,16 @@ class TestingModel:
                 # SUM OF ALL CORRECT OUTPUTS
                 testCorrects += torch.sum(predictions == labels).item()
 
+                # F1 SCORE OF MODEL
+                testF1Score = f1_score(labels.data, predictions, average=None)
+
         testAccuracy = (100 * (testCorrects / testDataSize))
-        return testAccuracy
+        return testAccuracy, testF1Score
 
 
 def main():
-    modelPerformance = TestingModel().testAccuracy()
+    modelAccuracy, modelF1Score = TestingModel().testAccuracy()
+    print(modelAccuracy, modelF1Score)
 
 
 if __name__ == "__main__":
