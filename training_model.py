@@ -205,7 +205,7 @@ class TrainingModel:
                             loss.backward()
                             optimizer.step()
 
-                    # # PRINT BATCH LOSS
+                    # PRINT BATCH LOSS
                     if (mode == "train") and (batchIdx % 5 == 0):
                         print(f"Batch [{batchIdx}/{len(self.dataLoaders[mode])}]: Batch Loss: {loss.item():.4f}, "
                               f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data)/len(labels)):.4f}")
