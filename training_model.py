@@ -130,8 +130,8 @@ class TrainingModel:
         self.valData = SandingCanopyDataset(self.valDataToDataset)
 
         # LOAD DATA INTO TRAIN, VAL AND TEST DATALOADERS
-        self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=2)
-        self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=2)
+        self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=4)
         self.dataLoaders = {"train": self.trainLoader, "val": self.valLoader}
 
         # CATEGORICAL ENCODING OF CLASSES
@@ -213,13 +213,14 @@ class TrainingModel:
                     # CALCULATE TOTAL LOSS AND CORRECTS OF EPOCH
                     runningLoss += loss.item() * images.size(0)
                     runningCorrects += torch.sum(predictions == labels.data)
-                    runningTotal +=
+                    runningTotal += len(labels.data)
+
                 if model == "train":
                     scheduler.step()
 
-                epochLoss = runningLoss / self.datasetSize[mode]
+                epochLoss = runningLoss / runningTotal
                 self.EpochLoss[mode].append(epochLoss)
-                epochAccuracy = 100 * (runningCorrects / self.datasetSize[mode])
+                epochAccuracy = 100 * (runningCorrects / runningTotal)
                 self.EpochAccuracy[mode].append(epochAccuracy)
 
                 if mode == "train":
@@ -245,12 +246,12 @@ class TrainingModel:
         return model
 
 
-def main():
-    resnet50Model = TrainingModel().trainModel()
-
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     resnet50Model = TrainingModel().trainModel()
+#
+#
+# if __name__ == "__main__":
+#     main()
 
 
 
