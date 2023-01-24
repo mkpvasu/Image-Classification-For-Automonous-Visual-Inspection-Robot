@@ -3,9 +3,9 @@ import cv2
 import shutil
 
 
-class PartitionImages:
+class PartitionImage:
     def __init__(self, image_path, sub_image_height=528, sub_image_width=528):
-        super(PartitionImages, self).__init__()
+        super(PartitionImage, self).__init__()
         self.partitionImagesDir = None
         self.capturedImgPath = image_path
         self.capturedImgName = os.path.splitext(os.path.basename(image_path))[0]
@@ -48,7 +48,7 @@ class PartitionImages:
 
 
 def main():
-    PartitionImages(image_path=r"G:\Macs Lab\imageClassification\data\Full_Resolution_Images\batch0\part0\30\pass_1\capt0001.jpg").partitionImage()
+    PartitionImage(image_path=r"G:\Macs Lab\imageClassification\data\Full_Resolution_Images\batch0\part0\30\pass_1\capt0001.jpg").partitionImage()
 
 
 if __name__ == "__main__":
