@@ -147,9 +147,12 @@ class TrainingModel:
     def outputTrainedModel(self, model=resnet50, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
         return self.trainModel(model, loss, optimizer, n_epochs)
 
-    def trainModel(self, model, loss, optimizer, n_epochs):
+    def trainModel(self, model, loss, optimizer, n_epochs, weights=ResNet50_Weights.IMAGENET1K_V2):
+        # WEIGHTS INITIALIZATION
+        weights = weights
+
         # LOAD MODEL
-        model = model(weights=ResNet50_Weights.IMAGENET1K_V2)
+        model = model(weights=weights)
 
         # EPOCHS TO BE TRAINED
         epochs = n_epochs

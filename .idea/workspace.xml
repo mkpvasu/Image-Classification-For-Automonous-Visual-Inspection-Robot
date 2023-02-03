@@ -5,12 +5,85 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0da978e5-47da-4fa3-8411-c265d67b5966" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/classification_flow_chart.drawio" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/Partitioned_Images/capt0000.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_directories_hierarchy.drawio" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/restore_image.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/create_dataset_for_model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/15_micron/Bad/capt0000_043.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/15_micron/Bad/capt0000_044.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/15_micron/Good/capt0000_045.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/15_micron/Good/capt0000_046.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/15_micron/Marginal/capt0000_047.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/15_micron/Marginal/capt0000_048.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/30_micron/Bad/capt0000_037.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/30_micron/Bad/capt0000_038.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/30_micron/Good/capt0000_039.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/30_micron/Good/capt0000_040.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/30_micron/Marginal/capt0000_041.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/30_micron/Marginal/capt0000_042.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/9_micron/Bad/capt0000_049.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/9_micron/Bad/capt0000_050.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/9_micron/Good/capt0000_051.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/9_micron/Good/capt0000_052.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/9_micron/Marginal/capt0000_053.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Current_Data/Total_Set/9_micron/Marginal/capt0000_054.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Test_Set/15_micron/Marginal/capt0000_048.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Test_Set/30_micron/Good/capt0000_039.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Test_Set/30_micron/Marginal/capt0000_041.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Test_Set/9_micron/Bad/capt0000_050.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Test_Set/9_micron/Good/capt0000_052.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Test_Set/9_micron/Marginal/capt0000_054.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Train_Set/15_micron/Marginal/capt0000_047.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Train_Set/30_micron/Good/capt0000_040.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Train_Set/30_micron/Marginal/capt0000_042.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Train_Set/9_micron/Bad/capt0000_049.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Train_Set/9_micron/Good/capt0000_051.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/DatasetForModel/Train_Set/9_micron/Marginal/capt0000_053.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/15_micron/Bad/capt0000_025.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/15_micron/Bad/capt0000_026.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/15_micron/Good/capt0000_027.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/15_micron/Good/capt0000_028.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/15_micron/Marginal/capt0000_029.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/15_micron/Marginal/capt0000_030.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/30_micron/Bad/capt0000_019.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/30_micron/Bad/capt0000_020.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/30_micron/Good/capt0000_021.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/30_micron/Good/capt0000_022.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/30_micron/Marginal/capt0000_023.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/30_micron/Marginal/capt0000_024.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/9_micron/Bad/capt0000_031.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/9_micron/Bad/capt0000_032.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/9_micron/Good/capt0000_033.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/9_micron/Good/capt0000_034.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/9_micron/Marginal/capt0000_035.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Test_Set/9_micron/Marginal/capt0000_036.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/15_micron/Bad/capt0000_007.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/15_micron/Bad/capt0000_008.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/15_micron/Good/capt0000_009.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/15_micron/Good/capt0000_010.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/15_micron/Marginal/capt0000_011.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/15_micron/Marginal/capt0000_012.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/30_micron/Bad/capt0000_001.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/30_micron/Bad/capt0000_002.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/30_micron/Good/capt0000_003.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/30_micron/Good/capt0000_004.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/30_micron/Marginal/capt0000_005.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/30_micron/Marginal/capt0000_006.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/9_micron/Bad/capt0000_013.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/9_micron/Bad/capt0000_014.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/9_micron/Good/capt0000_015.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/9_micron/Good/capt0000_016.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/9_micron/Marginal/capt0000_017.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/Past_Data/Train_Set/9_micron/Marginal/capt0000_018.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/capt0000_055.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/capt0000_056.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/capt0000_057.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/capt0000_058.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/capt0000_059.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/Dataset_Preparation/capt0000_060.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/partitioning_image_ros_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/partitioning_image_ros_node.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/Full_Resolution_Images/capt0000.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/Full_Resolution_Images/capt0001.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/Partitioned_Images/capt0000.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_directories_hierarchy.drawio" beforeDir="false" afterPath="$PROJECT_DIR$/data_directories_hierarchy.drawio" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/training_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/training_model.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,7 +110,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "last_opened_file_path": "G:/Macs Lab/imageClassification",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+    "settings.editor.selected.configurable": "terminal"
   },
   "keyToStringList": {
     "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
