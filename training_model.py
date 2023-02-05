@@ -29,6 +29,14 @@ class InvalidLabel(Exception):
 
 
 class ImagesAndLabels:
+    """
+    Class for combining images and its respective labels
+    Categorical Encoding:
+        Bad - 0.0
+        Marginal - 1.0
+        Good - 2.0
+    """
+
     def __init__(self, dataPath):
         super(ImagesAndLabels, self).__init__()
         self.datasetPath = dataPath
@@ -37,7 +45,7 @@ class ImagesAndLabels:
         allImages = []
         subFolders = [subFolder.path for subFolder in os.scandir(self.datasetPath) if subFolder.is_dir()]
 
-        labelCatEncoding = {"unsatisfactory": 0.0, "moderatelysatisfactory": 1.0, "satisfactory": 2.0}
+        labelCatEncoding = {"Bad": 0.0, "Marginal": 1.0, "Good": 2.0}
         for subFolder in subFolders:
             label = labelCatEncoding[os.path.basename(subFolder)]
             imagePaths = glob.glob(os.path.join(self.datasetPath, subFolder, "*.jpg"))
@@ -50,13 +58,17 @@ class ImagesAndLabels:
 
 
 class TrainData:
-    def __init__(self):
+    """
+    Class to get prepared training images
+    """
+    def __init__(self, train_data_path: str = os.path.join(os.getcwd(), "data", "Dataset_Preparation",
+                                                           "DatasetForModel", "Train_Set", "30_marginal")):
         super().__init__()
         self.trainRatio = 0.8
         self.valRatio = 0.2
 
         # CHANGE TRAIN DATA PATH ACCORDING TO SET UP
-        self.trainDataPath = os.path.join(os.getcwd(), "data", "dataset_for_model", "train_data")
+        self.trainDataPath = train_data_path
 
     def trainValDataPrep(self):
         trainImages = ImagesAndLabels(self.trainDataPath).appendImagesAndLabels()
@@ -67,6 +79,9 @@ class TrainData:
 
 
 class SandingCanopyDataset(Dataset):
+    """
+    Convert images and labels to pytorch dataset
+    """
     def __init__(self, dataToDataset):
         self.data = dataToDataset
         self.transformation = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
@@ -88,6 +103,9 @@ class SandingCanopyDataset(Dataset):
 
 
 class LoaderVisualization:
+    """
+    Visualize the images and labels loaded to dataset loader
+    """
     def __init__(self, dataloader, classes):
         self.dataLoader = dataloader
         self.classes = classes
@@ -114,7 +132,10 @@ class LoaderVisualization:
 
 # CLASS TO TRAIN RESNET MODEL ON INPUT DATASET
 class TrainingModel:
-    def __init__(self, batch_size=8):
+    """
+    Training script to train model using dataset
+    """
+    def __init__(self, save_weights_path, batch_size=8):
 
         # SELECT GPU IF AVAILABLE ELSE CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -135,7 +156,7 @@ class TrainingModel:
         self.dataLoaders = {"train": self.trainLoader, "val": self.valLoader}
 
         # CATEGORICAL ENCODING OF CLASSES
-        self.classes = {0.0: "unsatisfactory", 1.0: "moderatelysatisfactory", 2.0: "satisfactory"}
+        self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
 
         # TRACK LOSS AND ACCURACY FOR EACH EPOCH
         self.EpochLoss = {"train": [], "val": []}
@@ -143,6 +164,9 @@ class TrainingModel:
 
         # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
         # LoaderVisualization(self.valLoader, self.classes).imgAndLabelVisualization()
+
+        # SAVE WEIGHTS OF MODEL IN RESPECTIVE FOLDERS
+        self.saveWeightsPath = save_weights_path
 
     def outputTrainedModel(self, model=resnet50, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
         return self.trainModel(model, loss, optimizer, n_epochs)
@@ -234,12 +258,14 @@ class TrainingModel:
                 print(f"\n--- {phase} ----\nEpoch Loss: {self.EpochLoss[mode][epoch]:.4f}, "
                       f"Epoch Accuracy: {self.EpochAccuracy[mode][epoch]:.4f}\n")
 
-                # COPY WEIGHTS TO BEST MODEL WEIGHTS FOR HIGHEST ACCURACY EPOCHS
+                # SAVE WEIGHTS TO BEST MODEL WEIGHTS FOR HIGHEST ACCURACY EPOCHS AND LOCALLY FOR EACH IMPROVEMENT
                 if (mode == "val") and (self.EpochAccuracy[mode][epoch] > bestAcc):
-                    print("\n--- Model Performance Improved: Saving Weights ---\n\n")
+                    print("\n--- Model Performance Improved: Saving Weights ---\n")
+                    torch.save(model.state_dict(), self.saveWeightsPath + f"-epoch_{epoch}.pth")
                     bestAcc = epochAccuracy
                     bestModelWeights = copy.deepcopy(model.state_dict())
 
+        torch.save(bestModelWeights, self.saveWeightsPath + "-best_weights.pth")
         timeElapsed = time.time() - startTime
         print("\n", "*" * 100)
         print(f"\nTraining and Validation Completed in {timeElapsed // 60} minutes and {timeElapsed % 60} secs\n")
@@ -250,13 +276,6 @@ class TrainingModel:
 
         return model
 
-
-# def main():
-#     resnet50Model = TrainingModel().trainModel()
-#
-#
-# if __name__ == "__main__":
-#     main()
 
 
 

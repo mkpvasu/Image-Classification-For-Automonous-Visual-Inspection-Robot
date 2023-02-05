@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import cv2
 import numpy as np
@@ -18,6 +19,7 @@ class RestoreToOriginalImage:
             raise RuntimeError(f"No sub-images in the [{self.subImagesDir}] directory")
         sampleSubImage = cv2.imread(subImagesPath[0])
         patchHeight, patchWidth, patchChannels = sampleSubImage.shape
+        classificationOutputs = self.readClassifications()
 
         if patchChannels != self.originalImageChannels:
             self.originalImageChannels = patchChannels
@@ -34,12 +36,29 @@ class RestoreToOriginalImage:
 
         for rowIdx in range(subImageRows):
             for colIdx in range(subImageCols):
-                subImg = cv2.imread(subImagesPath[rowIdx * subImageCols + colIdx])
+                subImgPath = subImagesPath[rowIdx * subImageCols + colIdx]
+                subImgClassification = classificationOutputs[subImgPath]
+                subImg = cv2.imread(subImgPath)
+
                 for channel in range(self.originalImageChannels):
-                    originalImage[rowIdx * patchHeight:(rowIdx + 1) * patchHeight, colIdx * patchWidth:(colIdx + 1) * patchWidth, channel] = subImg[:, :, channel]
+                    if float(subImgClassification) == 0.0:
+                        subImg[:, :, 1] += 25
+                    elif float(subImgClassification) == 1.0:
+                        subImg[:, :, 0] += 25
+                        subImg[:, :, 1] += 25
+                    elif float(subImgClassification) == 2.0:
+                        subImg[:, :, 0] += 25
+                    originalImage[rowIdx * patchHeight:(rowIdx + 1) * patchHeight, colIdx * patchWidth:(colIdx + 1) * patchWidth, channel] = np.clip(subImg[:, :, channel], 0, 255)
 
         imagePath = os.path.join(r"G:\Macs Lab\imageClassification\data\Partitioned_Images", os.path.basename(self.subImagesDir) + ".jpg")
         cv2.imwrite(imagePath, originalImage)
+
+    def readClassifications(self):
+        classificationJsonPath = os.path.join(self.subImagesDir, "classification.json")
+        if not os.path.exists(classificationJsonPath):
+            raise RuntimeWarning(f"Classification json file doesn't exist in {self.subImagesDir}")
+        classifications = json.load(classificationJsonPath)
+        return classifications
 
 
 def main():
