@@ -3,6 +3,8 @@ import json
 import os
 import cv2
 import numpy as np
+from PIL import Image
+from transforms import RGBTransform
 
 
 class RestoreToOriginalImage:
@@ -23,7 +25,7 @@ class RestoreToOriginalImage:
 
         if patchChannels != self.originalImageChannels:
             self.originalImageChannels = patchChannels
-        originalImage = np.ndarray(shape=(self.originalImageHeight, self.originalImageWidth, self.originalImageChannels))
+        originalImage = Image.new("RGB", (self.originalImageWidth, self.originalImageHeight))
 
         subImageCols = self.originalImageWidth / patchWidth
         subImageRows = self.originalImageHeight / patchHeight
@@ -34,36 +36,40 @@ class RestoreToOriginalImage:
         subImageRows = int(subImageRows)
         subImageCols = int(subImageCols)
 
-        for rowIdx in range(subImageRows):
-            for colIdx in range(subImageCols):
-                subImgPath = subImagesPath[rowIdx * subImageCols + colIdx]
-                subImgClassification = classificationOutputs[subImgPath]
-                subImg = cv2.imread(subImgPath)
+        for rows in range(0, self.originalImageHeight, patchHeight):
+            for cols in range(0, self.originalImageWidth, patchWidth):
+                subImgPath = subImagesPath[(rows // patchHeight) * subImageCols + (cols // patchWidth)]
+                subImgClassification = classificationOutputs[os.path.basename(subImgPath)]
+                subImg = Image.open(subImgPath)
+                subImg = subImg.convert("RGB")
+                tintedSubImg = None
 
-                for channel in range(self.originalImageChannels):
-                    if float(subImgClassification) == 0.0:
-                        subImg[:, :, 1] += 25
-                    elif float(subImgClassification) == 1.0:
-                        subImg[:, :, 0] += 25
-                        subImg[:, :, 1] += 25
-                    elif float(subImgClassification) == 2.0:
-                        subImg[:, :, 0] += 25
-                    originalImage[rowIdx * patchHeight:(rowIdx + 1) * patchHeight, colIdx * patchWidth:(colIdx + 1) * patchWidth, channel] = np.clip(subImg[:, :, channel], 0, 255)
+                if float(subImgClassification) == 0.0:
+                    tintedSubImg = RGBTransform().tintWith((255, 0, 0), factor=0.2).applyToImg(subImg)
+                elif float(subImgClassification) == 1.0:
+                    tintedSubImg = RGBTransform().tintWith((255, 255, 0), factor=0.2).applyToImg(subImg)
+                elif float(subImgClassification) == 2.0:
+                    # tintedSubImg = RGBTransform().mix_with((0, 255, 0), factor=0.4).applied_to(subImg)
+                    tintedSubImg = subImg
 
-        imagePath = os.path.join(r"G:\Macs Lab\imageClassification\data\Partitioned_Images", os.path.basename(self.subImagesDir) + ".jpg")
-        cv2.imwrite(imagePath, originalImage)
+                originalImage.paste(tintedSubImg, (cols, rows))
+
+        imagePath = os.path.join(r"G:\Macs Lab\imageClassification\data\Partitioned_Images",
+                                 os.path.basename(self.subImagesDir) + ".jpg")
+        originalImage.save(imagePath)
 
     def readClassifications(self):
         classificationJsonPath = os.path.join(self.subImagesDir, "classification.json")
         if not os.path.exists(classificationJsonPath):
-            raise RuntimeWarning(f"Classification json file doesn't exist in {self.subImagesDir}")
-        classifications = json.load(classificationJsonPath)
+            raise RuntimeWarning(f"Classification JSON file doesn't exist in {self.subImagesDir}")
+        with open(classificationJsonPath, "r") as inputFile:
+            classifications = json.load(inputFile)
         return classifications
 
 
 def main():
     RestoreToOriginalImage(
-        sub_images_dir=r"G:\Macs Lab\imageClassification\data\Partitioned_Images\batch0\part0\30\pass_1\capt0000",
+        sub_images_dir=r"G:\Macs Lab\imageClassification\data\Partitioned_Images\batch0\part0\30\pass_2\capt0000",
         original_image_size=(6336, 9504)).restoreImage()
 
 
