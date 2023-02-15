@@ -1,10 +1,8 @@
 from __future__ import print_function, division
-import os
-import glob
 
-import numpy as np
+import glob
+import os
 import pandas as pd
-import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import DataLoader
@@ -17,7 +15,7 @@ class TestData:
         super().__init__()
 
         # CHANGE TEST DATA PATH ACCORDING TO SET UP
-        self.testDataPath = os.path.join(os.getcwd(), "data", "dataset_for_model", "test_data")
+        self.testDataPath = os.path.join(os.getcwd(), "data", "Dataset_Preparation", "DatasetForModel", "Test_Set", "30_micron")
 
     def testDataPrep(self):
         testImages = ImagesAndLabels(self.testDataPath).appendImagesAndLabels()
@@ -40,7 +38,7 @@ class TestingModel:
         self.testLoader = DataLoader(dataset=self.testData, batch_size=self.batchSize, shuffle=True, num_workers=2)
 
         # TRAINING DEEP LEARNING MODEL
-        self.trainedModel = TrainingModel(batch_size=8).outputTrainedModel()
+        self.trainedModel = TrainingModel(batch_size=self.batchSize, save_weights_path=os.path.join(os.getcwd(), "model_attributes", "30_micron")).outputTrainedModel(n_epochs=3)
 
     # TEST TRAINED MODEL WITH TESTING DATA AND TAKE THE TEST ACCURACY FOR FINAL MODEL PERFORMANCE
     def testAccuracy(self):

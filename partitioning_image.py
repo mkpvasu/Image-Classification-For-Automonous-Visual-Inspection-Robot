@@ -7,8 +7,8 @@ import shutil
 class PartitionImages:
     def __init__(self):
         super(PartitionImages, self).__init__()
-        self.imgsPath = os.path.join(os.getcwd(), 'data', 'high_resolution_images')
-        self.PImgsPath = os.path.join(os.getcwd(), 'data', 'partitioned_images')
+        self.imgsPath = os.path.join(os.getcwd(), 'data', 'Dataset_Preparation', 'Marginal')
+        self.PImgsPath = os.path.join(os.getcwd(), 'data', 'Dataset_Preparation', 'Marginal_partitioned')
         self.fullResolutionImgsPath = None
         self.rowsPImg = 528
         self.columnsPImg = 528

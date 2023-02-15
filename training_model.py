@@ -62,7 +62,7 @@ class TrainData:
     Class to get prepared training images
     """
     def __init__(self, train_data_path: str = os.path.join(os.getcwd(), "data", "Dataset_Preparation",
-                                                           "DatasetForModel", "Train_Set", "30_marginal")):
+                                                           "DatasetForModel", "Train_Set", "30_micron")):
         super().__init__()
         self.trainRatio = 0.8
         self.valRatio = 0.2
@@ -111,7 +111,10 @@ class LoaderVisualization:
         self.classes = classes
 
     # CONVERT IMAGE FROM FLAT IMAGE BACK TO ORIGINAL IMAGE
-    def showImg(self, img):
+    def formatImg(self, img):
+        """
+        Converts image into RGB format
+        """
         img = img
         npImg = img.numpy()
         npImg = np.transpose(npImg, (1, 2, 0))
@@ -119,23 +122,25 @@ class LoaderVisualization:
 
     # DISPLAY IMAGES IN THE DATALOADER WITH LABELS
     def imgAndLabelVisualization(self):
+        """
+        To display images and its labels present in the dataloader
+        """
         dataiter = iter(self.dataLoader)
         images, labels = next(dataiter)
         # Viewing data examples used for training
         fig, axis = plt.subplots(4, 5, figsize=(15, 10))
         for i, ax in enumerate(axis.flat):
             image, label = images[i], labels[i]
-            ax.imshow(self.showImg(image))
+            ax.imshow(self.formatImg(image))
             ax.set(title=f"{self.classes[label.item()]}")
         plt.show()
 
 
-# CLASS TO TRAIN RESNET MODEL ON INPUT DATASET
 class TrainingModel:
     """
-    Training script to train model using dataset
+    Class to train the deep learning model using input dataset
     """
-    def __init__(self, save_weights_path, batch_size=8):
+    def __init__(self, save_weights_path, batch_size=64):
 
         # SELECT GPU IF AVAILABLE ELSE CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -169,9 +174,31 @@ class TrainingModel:
         self.saveWeightsPath = save_weights_path
 
     def outputTrainedModel(self, model=resnet50, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
+        """
+        Returns trained model to testing_model.py
+        Args:
+            model: deep learning model
+            loss: loss function
+            optimizer: optimizer function
+            n_epochs: number of epochs
+
+        Returns:
+            self.trainModel: trained model
+        """
         return self.trainModel(model, loss, optimizer, n_epochs)
 
     def trainModel(self, model, loss, optimizer, n_epochs, weights=ResNet50_Weights.IMAGENET1K_V2):
+        """
+        Args:
+            model: untrained deep learning model
+            loss: loss function
+            optimizer: optimizer function
+            n_epochs: number of epochs
+            weights: pre-trained weights to be used for initialization
+
+        Returns:
+            model: trained deep learning model
+        """
         # WEIGHTS INITIALIZATION
         weights = weights
 
@@ -199,9 +226,9 @@ class TrainingModel:
         # BEST ACCURACY
         bestAcc = 0.0
 
-        # TRAINING MODEL FOR MENTIONED EPOCHS
+        # TRAINING MODEL FOR SPECIFIED # OF EPOCHS
         for epoch in range(epochs):
-            print(f"Epoch {epoch + 1} / {epochs}")
+            print(f"\nEpoch {epoch + 1}:")
             print("=" * 100, "\n")
 
             for mode in ["train", "val"]:
@@ -215,6 +242,7 @@ class TrainingModel:
                 runningTotal = 0
 
                 for batchIdx, (images, labels) in enumerate(self.dataLoaders[mode]):
+                    # TRANSFER THE IMAGES AND CORRESPONDING LABELS TO GPU IF AVAILABLE
                     images = images.to(self.device)
                     labels = labels.type(torch.LongTensor).to(self.device)
 
@@ -223,21 +251,28 @@ class TrainingModel:
 
                     # FORWARD PASSING IMAGES
                     with torch.set_grad_enabled(mode == "train"):
+                        # PREDICT THE MODELS OUTPUTS FOR INPUT IMAGES
                         outputs = model(images)
+
+                        # CALCULATE THE LOSS
                         loss = criterion(outputs, labels)
+
+                        # TAKE THE CLASS WITH MAXIMUM PROBABILITY AS THE PREDICTION
                         _, predictions = torch.max(outputs, dim=1)
 
-                        # BACKPROPAGATION AND UPDATE PARAMETERS DURING TRAIN
+                        # BACK-PROPAGATE AND UPDATE MODEL PARAMETERS IF TRAINING
                         if mode == "train":
                             loss.backward()
+
+                            # UPDATE THE WEIGHTS WITH OPTIMIZER TAKING SMALL STEP AT A TIME
                             optimizer.step()
 
-                    # PRINT BATCH LOSS
+                    # PRINT BATCH LOSS FOR EVERY 5 BATCHES IN A EPOCH
                     if (mode == "train") and (batchIdx % 5 == 0):
-                        print(f"Batch [{batchIdx}/{len(self.dataLoaders[mode])}]: Batch Loss: {loss.item():.4f}, "
+                        print(f"\nBatch [{batchIdx}/{len(self.dataLoaders[mode])}]: Batch Loss: {loss.item():.4f}, "
                               f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data)/len(labels)):.4f}")
 
-                    # CALCULATE TOTAL LOSS AND CORRECTS OF EPOCH
+                    # CALCULATE TOTAL LOSS AND CORRECT PREDICTIONS OF EACH EPOCH
                     runningLoss += loss.item() * images.size(0)
                     runningCorrects += torch.sum(predictions == labels.data)
                     runningTotal += len(labels.data)
@@ -245,8 +280,11 @@ class TrainingModel:
                 if model == "train":
                     scheduler.step()
 
+                # EPOCH LOSS IS AVG. LOSS OF ALL IMAGES
                 epochLoss = runningLoss / runningTotal
                 self.EpochLoss[mode].append(epochLoss)
+
+                # EPOCH ACCURACY IS TOTAL CORRECT PREDICTIONS BY TOTAL PREDICTIONS
                 epochAccuracy = 100 * (runningCorrects / runningTotal)
                 self.EpochAccuracy[mode].append(epochAccuracy)
 
@@ -258,7 +296,7 @@ class TrainingModel:
                 print(f"\n--- {phase} ----\nEpoch Loss: {self.EpochLoss[mode][epoch]:.4f}, "
                       f"Epoch Accuracy: {self.EpochAccuracy[mode][epoch]:.4f}\n")
 
-                # SAVE WEIGHTS TO BEST MODEL WEIGHTS FOR HIGHEST ACCURACY EPOCHS AND LOCALLY FOR EACH IMPROVEMENT
+                # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
                 if (mode == "val") and (self.EpochAccuracy[mode][epoch] > bestAcc):
                     print("\n--- Model Performance Improved: Saving Weights ---\n")
                     torch.save(model.state_dict(), self.saveWeightsPath + f"-epoch_{epoch}.pth")
@@ -266,10 +304,15 @@ class TrainingModel:
                     bestModelWeights = copy.deepcopy(model.state_dict())
 
         torch.save(bestModelWeights, self.saveWeightsPath + "-best_weights.pth")
+
+        # EMPTY THE CUDA MEMORY AFTER TRAINING
+        with torch.no_grad():
+            torch.cuda.empty_cache()
+
         timeElapsed = time.time() - startTime
         print("\n", "*" * 100)
         print(f"\nTraining and Validation Completed in {timeElapsed // 60} minutes and {timeElapsed % 60} secs\n")
-        print("*" * 100, "\n")
+        print("*" * 100)
 
         # LOAD BEST WEIGHTS
         model.load_state_dict(bestModelWeights)

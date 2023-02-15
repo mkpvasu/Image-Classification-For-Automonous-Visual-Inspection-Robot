@@ -5,7 +5,7 @@ import random
 
 
 class DatasetForModel:
-    def __init__(self, past_data_inclusion_ratio: float = 1, current_data_train_test_split:tuple = (0.9, 0.1)):
+    def __init__(self, past_data_inclusion_ratio: float = 0, current_data_train_test_split:tuple = (0.9, 0.1)):
         if not isinstance(past_data_inclusion_ratio, (int, float)):
             raise RuntimeError("past_data_inclusion_ratio - input argument should be int or float")
         if not isinstance(current_data_train_test_split, tuple):
