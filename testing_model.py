@@ -1,13 +1,11 @@
 from __future__ import print_function, division
-
-import glob
 import os
 import pandas as pd
 
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
-from training_model import ImagesAndLabels, SandingCanopyDataset, TrainingModel
+from training_model import ImagesAndLabels, SandingCanopyDataset, ModelTrain
 
 
 class TestData:
@@ -23,7 +21,7 @@ class TestData:
         return testData
 
 
-class TestingModel:
+class ModelTest:
     def __init__(self, batch_size=8):
 
         # SELECT GPU IF AVAILABLE ELSE RUN IN CPU
@@ -38,10 +36,10 @@ class TestingModel:
         self.testLoader = DataLoader(dataset=self.testData, batch_size=self.batchSize, shuffle=True, num_workers=2)
 
         # TRAINING DEEP LEARNING MODEL
-        self.trainedModel = TrainingModel(batch_size=self.batchSize, save_weights_path=os.path.join(os.getcwd(), "model_attributes", "30_micron")).outputTrainedModel(n_epochs=3)
+        self.trainedModel = ModelTrain(batch_size=self.batchSize, save_weights_path=os.path.join(os.getcwd(), "model_attributes", "30_micron")).outputTrainedModel(n_epochs=3)
 
     # TEST TRAINED MODEL WITH TESTING DATA AND TAKE THE TEST ACCURACY FOR FINAL MODEL PERFORMANCE
-    def testAccuracy(self):
+    def modelTestSetAccuracy(self):
         testCorrects = 0.0
         testDataSize = len(self.testDataToDataset)
 
@@ -70,7 +68,7 @@ class TestingModel:
 
 
 def main():
-    modelAccuracy, modelF1Score = TestingModel().testAccuracy()
+    modelAccuracy, modelF1Score = ModelTest().modelTestSetAccuracy()
     print(modelAccuracy, modelF1Score)
 
 
