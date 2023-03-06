@@ -136,7 +136,7 @@ class LoaderVisualization:
         plt.show()
 
 
-class TrainingModel:
+class ModelTrain:
     """
     Class to train the deep learning model using input dataset
     """
@@ -152,12 +152,12 @@ class TrainingModel:
         self.trainDataToDataset, self.valDataToDataset = TrainData().trainValDataPrep()
 
         # CONVERT PREPARED DATA INTO DATASET
-        self.trainData = SandingCanopyDataset(self.trainDataToDataset)
-        self.valData = SandingCanopyDataset(self.valDataToDataset)
+        self.trainDataset = SandingCanopyDataset(self.trainDataToDataset)
+        self.valDataset = SandingCanopyDataset(self.valDataToDataset)
 
         # LOAD DATA INTO TRAIN, VAL AND TEST DATALOADERS
-        self.trainLoader = DataLoader(dataset=self.trainData, batch_size=self.batchSize, shuffle=True, num_workers=4)
-        self.valLoader = DataLoader(dataset=self.valData, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.trainLoader = DataLoader(dataset=self.trainDataset, batch_size=self.batchSize, shuffle=True, num_workers=4)
+        self.valLoader = DataLoader(dataset=self.valDataset, batch_size=self.batchSize, shuffle=True, num_workers=4)
         self.dataLoaders = {"train": self.trainLoader, "val": self.valLoader}
 
         # CATEGORICAL ENCODING OF CLASSES
