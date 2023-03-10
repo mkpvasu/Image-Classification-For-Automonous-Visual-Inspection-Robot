@@ -30,7 +30,7 @@ class InvalidLabel(Exception):
 
 class ImagesAndLabels:
     """
-    Class for combining images and its respective labels
+    Combining sub-images with its respective labels
     Categorical Encoding:
         Bad - 0.0
         Marginal - 1.0
@@ -41,7 +41,7 @@ class ImagesAndLabels:
         super(ImagesAndLabels, self).__init__()
         self.datasetPath = dataPath
 
-    def appendImagesAndLabels(self):
+    def append_images_and_labels(self):
         allImages = []
         subFolders = [subFolder.path for subFolder in os.scandir(self.datasetPath) if subFolder.is_dir()]
 
@@ -58,9 +58,7 @@ class ImagesAndLabels:
 
 
 class TrainData:
-    """
-    Class to get prepared training images
-    """
+    """ To receive training images with respective labels """
     def __init__(self, train_data_path: str = os.path.join(os.getcwd(), "data", "Dataset_Preparation",
                                                            "DatasetForModel", "Train_Set", "30_micron")):
         super().__init__()
@@ -70,8 +68,8 @@ class TrainData:
         # CHANGE TRAIN DATA PATH ACCORDING TO SET UP
         self.trainDataPath = train_data_path
 
-    def trainValDataPrep(self):
-        trainImages = ImagesAndLabels(self.trainDataPath).appendImagesAndLabels()
+    def train_val_data_prep(self):
+        trainImages = ImagesAndLabels(self.trainDataPath).append_images_and_labels()
         trainDf = pd.DataFrame(trainImages, columns=['ImageName', 'Label'])
         trainData, valData = train_test_split(trainDf, test_size=0.2)
         trainData, valData = trainData.reset_index(), valData.reset_index()
@@ -79,9 +77,7 @@ class TrainData:
 
 
 class SandingCanopyDataset(Dataset):
-    """
-    Convert images and labels to pytorch dataset
-    """
+    """ Convert images and labels to pytorch dataset """
     def __init__(self, dataToDataset):
         self.data = dataToDataset
         self.transformation = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
@@ -103,25 +99,21 @@ class SandingCanopyDataset(Dataset):
 
 
 class LoaderVisualization:
-    """
-    Visualize the images and labels loaded to dataset loader
-    """
+    """ Visualize the images and labels loaded to dataset loader """
     def __init__(self, dataloader, classes):
         self.dataLoader = dataloader
         self.classes = classes
 
     # CONVERT IMAGE FROM FLAT IMAGE BACK TO ORIGINAL IMAGE
-    def formatImg(self, img):
-        """
-        Converts image into RGB format
-        """
+    def format_img(self, img):
+        """ Converts to-be displayed image into RGB format """
         img = img
         npImg = img.numpy()
         npImg = np.transpose(npImg, (1, 2, 0))
         return npImg
 
     # DISPLAY IMAGES IN THE DATALOADER WITH LABELS
-    def imgAndLabelVisualization(self):
+    def img_and_label_visualization(self):
         """
         To display images and its labels present in the dataloader
         """
@@ -131,25 +123,40 @@ class LoaderVisualization:
         fig, axis = plt.subplots(4, 5, figsize=(15, 10))
         for i, ax in enumerate(axis.flat):
             image, label = images[i], labels[i]
-            ax.imshow(self.formatImg(image))
+            ax.imshow(self.format_img(image))
             ax.set(title=f"{self.classes[label.item()]}")
         plt.show()
 
 
 class ModelTrain:
-    """
-    Class to train the deep learning model using input dataset
-    """
-    def __init__(self, save_weights_path, batch_size=64):
+    """ To train the ResNet50 model using the custom prepared sub-images dataset """
+    def __init__(self, save_weights_path, model=resnet50, weights=ResNet50_Weights.IMAGENET1K_V2,
+                 loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, model_lr_scheduler=lr_scheduler.ExponentialLR,
+                 model_lr_scheduler_gamma=0.95, n_epochs=5, batch_size=64):
+
+        # ASSIGN INPUTS TO INSTANCE VARIABLES
+        # WEIGHTS INITIALIZATION FOR TRANSFER LEARNING
+        self.weights = weights
+        # MODEL
+        self.model = model(weights=self.weights)
+        # LOSS FUNCTION
+        self.loss = loss
+        # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
+        self.optimizer = optimizer(params=self.model.parameters(), lr=0.005)
+        # EPOCHS TO BE TRAINED
+        self.n_epochs = n_epochs
+        # GAMMA FOR LEARNING RATE SCHEDULER
+        self.model_lr_scheduler_gamma = model_lr_scheduler_gamma
+        # UPDATE LEARNING RATE USING SCHEDULER
+        self.model_lr_scheduler = model_lr_scheduler(optimizer=self.optimizer, gamma=self.model_lr_scheduler_gamma)
+        # BATCH SIZE FOR TRAINING
+        self.batchSize = batch_size
 
         # SELECT GPU IF AVAILABLE ELSE CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        # SIZE OF THE BATCH
-        self.batchSize = batch_size
-
         # PREPARATION OF TRAIN, VAL AND TEST DATA FOR DATASET CONVERSION
-        self.trainDataToDataset, self.valDataToDataset = TrainData().trainValDataPrep()
+        self.trainDataToDataset, self.valDataToDataset = TrainData().train_val_data_prep()
 
         # CONVERT PREPARED DATA INTO DATASET
         self.trainDataset = SandingCanopyDataset(self.trainDataToDataset)
@@ -168,74 +175,56 @@ class ModelTrain:
         self.EpochAccuracy = {"train": [], "val": []}
 
         # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
-        # LoaderVisualization(self.valLoader, self.classes).imgAndLabelVisualization()
+        # LoaderVisualization(self.valLoader, self.classes).img_and_label_visualization()
 
         # SAVE WEIGHTS OF MODEL IN RESPECTIVE FOLDERS
         self.saveWeightsPath = save_weights_path
 
-    def outputTrainedModel(self, model=resnet50, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, n_epochs=10):
+    def outputTrainedModel(self):
         """
-        Returns trained model to testing_model.py
-        Args:
-            model: deep learning model
-            loss: loss function
-            optimizer: optimizer function
-            n_epochs: number of epochs
+        Outputs trained model
 
         Returns:
             self.trainModel: trained model
         """
-        return self.trainModel(model, loss, optimizer, n_epochs)
+        modelAttributes = dict()
+        modelAttributes["dataset"] = "DatasetForModel_v" + time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(os.path.getmtime(os.path.join(os.getcwd(), "data", "Dataset_Preparation", "DatasetForModel"))))
+        modelAttributes["model"] = self.model
+        modelAttributes["weights"] = self.weights
+        modelAttributes["loss"] = self.loss
+        modelAttributes["optimizer"] = self.optimizer
+        modelAttributes["model_lr_scheduler"] = self.model_lr_scheduler
+        modelAttributes["model_lr_scheduler_gamma"] = self.model_lr_scheduler_gamma
+        modelAttributes["classes"] = self.classes
 
-    def trainModel(self, model, loss, optimizer, n_epochs, weights=ResNet50_Weights.IMAGENET1K_V2):
+        return modelAttributes, self.train_model()
+
+    def train_model(self):
         """
-        Args:
-            model: untrained deep learning model
-            loss: loss function
-            optimizer: optimizer function
-            n_epochs: number of epochs
-            weights: pre-trained weights to be used for initialization
-
+        Train image classification model depending on input arguments specified by the user
         Returns:
             model: trained deep learning model
         """
-        # WEIGHTS INITIALIZATION
-        weights = weights
-
-        # LOAD MODEL
-        model = model(weights=weights)
-
-        # EPOCHS TO BE TRAINED
-        epochs = n_epochs
-
-        # LOSS FUNCTION
-        criterion = loss
-
-        # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
-        optimizer = optimizer(model.parameters(), lr=0.005)
-
-        # UPDATE LEARNING RATE USING SCHEDULER
-        scheduler = lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.95)
 
         # TO ANALYZE THE DURATION OF TRAINING MODEL
         startTime = time.time()
 
         # TO KEEP TRACK OF BEST MODEL WEIGHT
-        bestModelWeights = copy.deepcopy(model.state_dict())
+        bestModelWeights = copy.deepcopy(self.model.state_dict())
 
         # BEST ACCURACY
         bestAcc = 0.0
 
         # TRAINING MODEL FOR SPECIFIED # OF EPOCHS
-        for epoch in range(epochs):
+        for epoch in range(self.n_epochs):
             print(f"\nEpoch {epoch + 1}:")
             print("=" * 100, "\n")
 
             for mode in ["train", "val"]:
                 if mode == "train":
-                    model.train()
+                    self.model.train()
                 else:
-                    model.eval()
+                    self.model.eval()
 
                 runningLoss = 0.0
                 runningCorrects = 0
@@ -247,15 +236,15 @@ class ModelTrain:
                     labels = labels.type(torch.LongTensor).to(self.device)
 
                     # INITIALIZE GRADIENTS TO BE ZERO
-                    optimizer.zero_grad()
+                    self.optimizer.zero_grad()
 
                     # FORWARD PASSING IMAGES
                     with torch.set_grad_enabled(mode == "train"):
                         # PREDICT THE MODELS OUTPUTS FOR INPUT IMAGES
-                        outputs = model(images)
+                        outputs = self.model(images)
 
                         # CALCULATE THE LOSS
-                        loss = criterion(outputs, labels)
+                        loss = self.loss(outputs, labels)
 
                         # TAKE THE CLASS WITH MAXIMUM PROBABILITY AS THE PREDICTION
                         _, predictions = torch.max(outputs, dim=1)
@@ -265,7 +254,7 @@ class ModelTrain:
                             loss.backward()
 
                             # UPDATE THE WEIGHTS WITH OPTIMIZER TAKING SMALL STEP AT A TIME
-                            optimizer.step()
+                            self.optimizer.step()
 
                     # PRINT BATCH LOSS FOR EVERY 5 BATCHES IN A EPOCH
                     if (mode == "train") and (batchIdx % 5 == 0):
@@ -277,8 +266,8 @@ class ModelTrain:
                     runningCorrects += torch.sum(predictions == labels.data)
                     runningTotal += len(labels.data)
 
-                if model == "train":
-                    scheduler.step()
+                if self.model == "train":
+                    self.model_lr_scheduler.step()
 
                 # EPOCH LOSS IS AVG. LOSS OF ALL IMAGES
                 epochLoss = runningLoss / runningTotal
@@ -293,15 +282,15 @@ class ModelTrain:
                 else:
                     phase = "Validation"
 
-                print(f"\n--- {phase} ----\nEpoch Loss: {self.EpochLoss[mode][epoch]:.4f}, "
+                print(f"\n--------------------- {phase} ---------------------\nEpoch Loss: {self.EpochLoss[mode][epoch]:.4f}, "
                       f"Epoch Accuracy: {self.EpochAccuracy[mode][epoch]:.4f}\n")
 
                 # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
                 if (mode == "val") and (self.EpochAccuracy[mode][epoch] > bestAcc):
                     print("\n--- Model Performance Improved: Saving Weights ---\n")
-                    torch.save(model.state_dict(), self.saveWeightsPath + f"-epoch_{epoch}.pth")
+                    torch.save(self.model.state_dict(), self.saveWeightsPath + f"-epoch_{epoch}.pth")
                     bestAcc = epochAccuracy
-                    bestModelWeights = copy.deepcopy(model.state_dict())
+                    bestModelWeights = copy.deepcopy(self.model.state_dict())
 
         torch.save(bestModelWeights, self.saveWeightsPath + "-best_weights.pth")
 
@@ -315,9 +304,9 @@ class ModelTrain:
         print("*" * 100)
 
         # LOAD BEST WEIGHTS
-        model.load_state_dict(bestModelWeights)
+        self.model.load_state_dict(bestModelWeights)
 
-        return model
+        return self.model
 
 
 
