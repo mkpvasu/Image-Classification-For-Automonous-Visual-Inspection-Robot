@@ -171,8 +171,8 @@ class ModelTrain:
         self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
 
         # TRACK LOSS AND ACCURACY FOR EACH EPOCH
-        self.EpochLoss = {"train": [], "val": []}
-        self.EpochAccuracy = {"train": [], "val": []}
+        self.epochLoss = {"train": {}, "val": {}}
+        self.epochAccuracy = {"train": {}, "val": {}}
 
         # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
         # LoaderVisualization(self.valLoader, self.classes).img_and_label_visualization()
@@ -180,7 +180,7 @@ class ModelTrain:
         # SAVE WEIGHTS OF MODEL IN RESPECTIVE FOLDERS
         self.saveWeightsPath = save_weights_path
 
-    def outputTrainedModel(self):
+    def output_trained_model(self):
         """
         Outputs trained model
 
@@ -271,22 +271,22 @@ class ModelTrain:
 
                 # EPOCH LOSS IS AVG. LOSS OF ALL IMAGES
                 epochLoss = runningLoss / runningTotal
-                self.EpochLoss[mode].append(epochLoss)
+                self.epochLoss[mode][epoch+1] = epochLoss
 
                 # EPOCH ACCURACY IS TOTAL CORRECT PREDICTIONS BY TOTAL PREDICTIONS
                 epochAccuracy = 100 * (runningCorrects / runningTotal)
-                self.EpochAccuracy[mode].append(epochAccuracy)
+                self.epochAccuracy[mode][epoch+1] = epochAccuracy
 
                 if mode == "train":
                     phase = "Training"
                 else:
                     phase = "Validation"
 
-                print(f"\n--------------------- {phase} ---------------------\nEpoch Loss: {self.EpochLoss[mode][epoch]:.4f}, "
-                      f"Epoch Accuracy: {self.EpochAccuracy[mode][epoch]:.4f}\n")
+                print(f"\n--------------------- {phase} ---------------------\nEpoch Loss: {self.epochLoss[mode][epoch]:.4f}, "
+                      f"Epoch Accuracy: {self.epochAccuracy[mode][epoch]:.4f}\n")
 
                 # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
-                if (mode == "val") and (self.EpochAccuracy[mode][epoch] > bestAcc):
+                if (mode == "val") and (self.epochAccuracy[mode][epoch] > bestAcc):
                     print("\n--- Model Performance Improved: Saving Weights ---\n")
                     torch.save(self.model.state_dict(), self.saveWeightsPath + f"-epoch_{epoch}.pth")
                     bestAcc = epochAccuracy
@@ -303,15 +303,23 @@ class ModelTrain:
         print(f"\nTraining and Validation Completed in {timeElapsed // 60} minutes and {timeElapsed % 60} secs\n")
         print("*" * 100)
 
+        # SAVE TRAINING AND VALIDATION LOSS CURVE AND ACCURACY WITH EPOCHS
+        self.plot_loss_accuracy_curve()
+
         # LOAD BEST WEIGHTS
         self.model.load_state_dict(bestModelWeights)
 
         return self.model
 
-
-
-
-
-
-
-
+    def plot_loss_accuracy_curve(self):
+        for performanceMetrics in [self.epochLoss, self.epochAccuracy]:
+            plt.figure()
+            for mode in ["train", "val"]:
+                plt.plot(performanceMetrics[mode].keys(), performanceMetrics[mode].values(), label=mode)
+            plt.xlabel("# of Epochs")
+            plt.ylabel("Epoch Loss")
+            plt.title("Training and Validation Loss vs Epochs")
+            if performanceMetrics == self.epochLoss:
+                plt.savefig(os.path.join(self.saveWeightsPath, "loss_curve"), format="png", bbox_inches="tight")
+            else:
+                plt.savefig(os.path.join(self.saveWeightsPath, "accuracy_curve"), format="png", bbox_inches="tight")
