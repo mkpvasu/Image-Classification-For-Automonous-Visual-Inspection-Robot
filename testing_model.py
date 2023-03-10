@@ -2,6 +2,7 @@ from __future__ import print_function, division
 import os
 import json
 import pandas as pd
+import datetime as dt
 
 import torch
 from torch.utils.data import DataLoader
@@ -33,8 +34,15 @@ class ModelTest:
         # DEFINE MICRON FOR MODEL TO BE TRAINED
         self.micron = "30_micron"
 
+        # CREATE A NEW TRAINING FOLDER EVERYTIME FOR TRAINING
+        self.trainingFolder = "model_training_" + dt.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+
         # TRAINING DEEP LEARNING MODEL
-        self.modelAttributes, self.trainedModel = ModelTrain(batch_size=self.batchSize, save_weights_path=os.path.join(os.getcwd(), "model_attributes", self.micron, "next")).outputTrainedModel()
+        self.modelAttributes, self.trainedModel = \
+            ModelTrain(batch_size=self.batchSize, save_weights_path=os.path.join(os.getcwd(), "model_attributes",
+                                                                                 self.micron, "next",
+                                                                                 self.trainingFolder))\
+                .output_trained_model()
 
     # TEST TRAINED MODEL WITH TESTING DATA AND TAKE THE TEST ACCURACY FOR FINAL MODEL PERFORMANCE
     def modelTestSetAccuracy(self):

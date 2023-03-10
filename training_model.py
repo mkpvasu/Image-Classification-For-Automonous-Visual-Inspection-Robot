@@ -171,8 +171,8 @@ class ModelTrain:
         self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
 
         # TRACK LOSS AND ACCURACY FOR EACH EPOCH
-        self.EpochLoss = {"train": [], "val": []}
-        self.EpochAccuracy = {"train": [], "val": []}
+        self.EpochLoss = {"train": {}, "val": {}}
+        self.EpochAccuracy = {"train": {}, "val": {}}
 
         # VISUALIZATION OF IMAGES AND LABELS IN DATALOADER
         # LoaderVisualization(self.valLoader, self.classes).img_and_label_visualization()
@@ -180,7 +180,7 @@ class ModelTrain:
         # SAVE WEIGHTS OF MODEL IN RESPECTIVE FOLDERS
         self.saveWeightsPath = save_weights_path
 
-    def outputTrainedModel(self):
+    def output_trained_model(self):
         """
         Outputs trained model
 
@@ -271,11 +271,11 @@ class ModelTrain:
 
                 # EPOCH LOSS IS AVG. LOSS OF ALL IMAGES
                 epochLoss = runningLoss / runningTotal
-                self.EpochLoss[mode].append(epochLoss)
+                self.EpochLoss[mode][epoch+1] = epochLoss
 
                 # EPOCH ACCURACY IS TOTAL CORRECT PREDICTIONS BY TOTAL PREDICTIONS
                 epochAccuracy = 100 * (runningCorrects / runningTotal)
-                self.EpochAccuracy[mode].append(epochAccuracy)
+                self.EpochAccuracy[mode][epoch+1] = epochAccuracy
 
                 if mode == "train":
                     phase = "Training"
@@ -302,6 +302,18 @@ class ModelTrain:
         print("\n", "*" * 100)
         print(f"\nTraining and Validation Completed in {timeElapsed // 60} minutes and {timeElapsed % 60} secs\n")
         print("*" * 100)
+
+        # SAVE TRAINING AND VALIDATION LOSS CURVE AND ACCURACY WITH EPOCHS
+        for performanceMetrics in [self.EpochLoss, self.EpochAccuracy]:
+            plt.figure()
+            for mode in ["train", "val"]:
+                plt.plot(performanceMetrics[mode].keys(), performanceMetrics[mode].values(), label=mode)
+            plt.xlabel("# of Epochs")
+            plt.ylabel("Epoch Loss")
+            plt.title("Training and Validation Loss vs Epochs")
+            if performanceMetrics == self.EpochLoss:
+                plt.savefig(os.path.join())
+
 
         # LOAD BEST WEIGHTS
         self.model.load_state_dict(bestModelWeights)

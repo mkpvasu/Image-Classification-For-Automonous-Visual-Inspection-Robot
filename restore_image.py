@@ -54,8 +54,7 @@ class RestoreToOriginalImage:
 
                 originalImage.paste(tintedSubImg, (cols, rows))
 
-        imagePath = os.path.join(r"G:\Macs Lab\imageClassification\data\Partitioned_Images",
-                                 os.path.basename(self.subImagesDir) + ".jpg")
+        imagePath = os.path.join(self.subImagesDir, os.path.basename(self.subImagesDir) + "_restored.jpg")
         originalImage.save(imagePath)
 
     def readClassifications(self):
@@ -69,7 +68,7 @@ class RestoreToOriginalImage:
 
 def main():
     RestoreToOriginalImage(
-        sub_images_dir=r"G:\Macs Lab\imageClassification\data\Partitioned_Images\batch0\part0\30\pass_2\capt0000",
+        sub_images_dir=r"C:\Macs Lab\imageClassification\data\partitioned_images\batch0\part0\30_micron\pass_1\capt0000",
         original_image_size=(6336, 9504)).restoreImage()
 
 
