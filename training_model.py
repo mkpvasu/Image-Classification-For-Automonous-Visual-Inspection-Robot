@@ -57,25 +57,6 @@ class ImagesAndLabels:
         return allImages
 
 
-class TrainData:
-    """ To receive training images with respective labels """
-    def __init__(self, train_data_path: str = os.path.join(os.getcwd(), "data", "Dataset_Preparation",
-                                                           "DatasetForModel", "Train_Set", "30_micron")):
-        super().__init__()
-        self.trainRatio = 0.8
-        self.valRatio = 0.2
-
-        # CHANGE TRAIN DATA PATH ACCORDING TO SET UP
-        self.trainDataPath = train_data_path
-
-    def train_val_data_prep(self):
-        trainImages = ImagesAndLabels(self.trainDataPath).append_images_and_labels()
-        trainDf = pd.DataFrame(trainImages, columns=['ImageName', 'Label'])
-        trainData, valData = train_test_split(trainDf, test_size=0.2)
-        trainData, valData = trainData.reset_index(), valData.reset_index()
-        return trainData, valData
-
-
 class SandingCanopyDataset(Dataset):
     """ Convert images and labels to pytorch dataset """
     def __init__(self, dataToDataset):
@@ -130,11 +111,16 @@ class LoaderVisualization:
 
 class ModelTrain:
     """ To train the ResNet50 model using the custom prepared sub-images dataset """
-    def __init__(self, save_weights_path, model=resnet50, weights=ResNet50_Weights.IMAGENET1K_V2,
+    def __init__(self, save_model_attributes_path, micron="30_micron", model=resnet50, weights=ResNet50_Weights.IMAGENET1K_V2,
                  loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, model_lr_scheduler=lr_scheduler.ExponentialLR,
-                 model_lr_scheduler_gamma=0.95, n_epochs=5, batch_size=64):
+                 model_lr_scheduler_gamma=0.95, n_epochs=5, batch_size=64, train_val_split=0.2):
 
         # ASSIGN INPUTS TO INSTANCE VARIABLES
+        # MICRON OF SANDING TO BE TRAINED
+        self.micron = micron
+        # DIRECTORY CONTAINING TRAIN DATA
+        self.train_data_path = os.path.join(os.getcwd(), "data", "dataset_preparation",
+                                            "dataset_for_model", "Train_Set", self.micron)
         # WEIGHTS INITIALIZATION FOR TRANSFER LEARNING
         self.weights = weights
         # MODEL
@@ -151,12 +137,14 @@ class ModelTrain:
         self.model_lr_scheduler = model_lr_scheduler(optimizer=self.optimizer, gamma=self.model_lr_scheduler_gamma)
         # BATCH SIZE FOR TRAINING
         self.batchSize = batch_size
+        # RATIO OF TRAINING AND VALIDATION SPLIT FROM THE TRAIN DATA
+        self.trainValSplit = train_val_split
 
         # SELECT GPU IF AVAILABLE ELSE CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # PREPARATION OF TRAIN, VAL AND TEST DATA FOR DATASET CONVERSION
-        self.trainDataToDataset, self.valDataToDataset = TrainData().train_val_data_prep()
+        self.trainDataToDataset, self.valDataToDataset = self.train_val_data_prep()
 
         # CONVERT PREPARED DATA INTO DATASET
         self.trainDataset = SandingCanopyDataset(self.trainDataToDataset)
@@ -178,7 +166,7 @@ class ModelTrain:
         # LoaderVisualization(self.valLoader, self.classes).img_and_label_visualization()
 
         # SAVE WEIGHTS OF MODEL IN RESPECTIVE FOLDERS
-        self.saveWeightsPath = save_weights_path
+        self.save_model_attributes_path = save_model_attributes_path
 
     def output_trained_model(self):
         """
@@ -288,11 +276,11 @@ class ModelTrain:
                 # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
                 if (mode == "val") and (self.epochAccuracy[mode][epoch] > bestAcc):
                     print("\n--- Model Performance Improved: Saving Weights ---\n")
-                    torch.save(self.model.state_dict(), self.saveWeightsPath + f"-epoch_{epoch}.pth")
+                    torch.save(self.model.state_dict(), self.save_model_attributes_path + f"-epoch_{epoch}.pth")
                     bestAcc = epochAccuracy
                     bestModelWeights = copy.deepcopy(self.model.state_dict())
 
-        torch.save(bestModelWeights, self.saveWeightsPath + "-best_weights.pth")
+        torch.save(bestModelWeights, self.save_model_attributes_path + "-best_weights.pth")
 
         # EMPTY THE CUDA MEMORY AFTER TRAINING
         with torch.no_grad():
@@ -320,6 +308,13 @@ class ModelTrain:
             plt.ylabel("Epoch Loss")
             plt.title("Training and Validation Loss vs Epochs")
             if performanceMetrics == self.epochLoss:
-                plt.savefig(os.path.join(self.saveWeightsPath, "loss_curve"), format="png", bbox_inches="tight")
+                plt.savefig(os.path.join(self.save_model_attributes_path, "loss_curve"), format="png", bbox_inches="tight")
             else:
-                plt.savefig(os.path.join(self.saveWeightsPath, "accuracy_curve"), format="png", bbox_inches="tight")
+                plt.savefig(os.path.join(self.save_model_attributes_path, "accuracy_curve"), format="png", bbox_inches="tight")
+
+    def train_val_data_prep(self):
+        train_images = ImagesAndLabels(self.train_data_path).append_images_and_labels()
+        train_df = pd.DataFrame(train_images, columns=['ImageName', 'Label'])
+        train_data, val_data = train_test_split(train_df, test_size=self)
+        train_data, val_data = train_data.reset_index(), val_data.reset_index()
+        return train_data, val_data

@@ -10,21 +10,8 @@ from sklearn.metrics import f1_score
 from training_model import ImagesAndLabels, SandingCanopyDataset, ModelTrain
 
 
-class TestData:
-    def __init__(self):
-        super().__init__()
-
-        # CHANGE TEST DATA PATH ACCORDING TO SET UP
-        self.testDataPath = os.path.join(os.getcwd(), "data", "Dataset_Preparation", "DatasetForModel", "Test_Set", "30_micron")
-
-    def testDataPrep(self):
-        testImages = ImagesAndLabels(self.testDataPath).append_images_and_labels()
-        testData = pd.DataFrame(testImages, columns=["ImageName", "Label"])
-        return testData
-
-
 class ModelTest:
-    def __init__(self, batch_size=8):
+    def __init__(self, micron="30_micron", batch_size=8):
         # SELECT GPU IF AVAILABLE ELSE RUN IN CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -32,22 +19,28 @@ class ModelTest:
         self.batchSize = batch_size
 
         # DEFINE MICRON FOR MODEL TO BE TRAINED
-        self.micron = "30_micron"
+        self.micron = micron
+
+        # CHANGE TEST DATA PATH ACCORDING TO SET UP
+        self.testDataPath = os.path.join(os.getcwd(), "data", "dataset_preparation", "dataset_for_model", "test_set",
+                                         self.micron)
 
         # CREATE A NEW TRAINING FOLDER EVERYTIME FOR TRAINING
         self.trainingFolder = "model_training_" + dt.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
-        # TRAINING DEEP LEARNING MODEL
+        # DIRECTORY TO SAVE MODEL ATTRIBUTES
+        self.save_model_attributes_path = os.path.join(os.getcwd(), "model_attributes", self.micron, "next",
+                                                       self.trainingFolder)
+
+        # TRAIN DEEP LEARNING MODEL
         self.modelAttributes, self.trainedModel = \
-            ModelTrain(batch_size=self.batchSize, save_weights_path=os.path.join(os.getcwd(), "model_attributes",
-                                                                                 self.micron, "next",
-                                                                                 self.trainingFolder))\
+            ModelTrain(batch_size=self.batchSize, save_model_attributes_path=self.save_model_attributes_path)\
                 .output_trained_model()
 
     # TEST TRAINED MODEL WITH TESTING DATA AND TAKE THE TEST ACCURACY FOR FINAL MODEL PERFORMANCE
-    def modelTestSetAccuracy(self):
+    def model_test_set_accuracy(self):
         # CONVERT IMAGES AND LABELS TO LOADABLE DATASET FOR MODEL
-        testDataToDataset = TestData().testDataPrep()
+        testDataToDataset = self.test_data_prep()
         testData = SandingCanopyDataset(testDataToDataset)
         testLoader = DataLoader(dataset=testData, batch_size=self.batchSize, shuffle=True, num_workers=2)
 
@@ -77,22 +70,25 @@ class ModelTest:
         testAccuracy = (100 * (testCorrects / testDataSize))
         return testAccuracy, testF1Score
 
-    def saveModelFeatures(self):
-
-        modelAccuracy, modelF1Score = self.modelTestSetAccuracy()
+    def save_model_features(self):
+        modelAccuracy, modelF1Score = self.model_test_set_accuracy()
 
         performanceAttributes = self.modelAttributes
         # IMPORTANT FEATURES OF MODEL TO BE SAVED
         performanceAttributes["model_accuracy"] = modelAccuracy
         performanceAttributes["model_f1_score"] = modelF1Score
 
-        with open(os.path.join(os.getcwd(), "model_attributes", "30_micron", "next_model", "bestweights",
-                               "performance.json")) as saveFile:
+        with open(os.path.join(self.save_model_attributes_path, "performance.json")) as saveFile:
             json.dump(performanceAttributes, saveFile, indent=2)
+
+    def test_data_prep(self):
+        testImages = ImagesAndLabels(self.testDataPath).append_images_and_labels()
+        testData = pd.DataFrame(testImages, columns=["ImageName", "Label"])
+        return testData
 
 
 def main():
-    ModelTest().saveModelFeatures()
+    ModelTest().save_model_features()
 
 
 if __name__ == "__main__":
