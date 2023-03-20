@@ -176,7 +176,7 @@ class ModelTrain:
             self.trainModel: trained model
         """
         modelAttributes = dict()
-        modelAttributes["dataset"] = "DatasetForModel_v" + time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(os.path.getmtime(os.path.join(os.getcwd(), "data", "Dataset_Preparation", "DatasetForModel"))))
+        modelAttributes["dataset"] = "DatasetForModel_v" + time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(os.path.getmtime(os.path.join(os.getcwd(), "data", "dataset_preparation", "dataset_for_model"))))
         modelAttributes["model"] = self.model
         modelAttributes["weights"] = self.weights
         modelAttributes["loss"] = self.loss
@@ -270,11 +270,11 @@ class ModelTrain:
                 else:
                     phase = "Validation"
 
-                print(f"\n--------------------- {phase} ---------------------\nEpoch Loss: {self.epochLoss[mode][epoch]:.4f}, "
-                      f"Epoch Accuracy: {self.epochAccuracy[mode][epoch]:.4f}\n")
+                print(f"\n--------------------- {phase} ---------------------\nEpoch Loss: {self.epochLoss[mode][epoch+1]:.4f}, "
+                      f"Epoch Accuracy: {self.epochAccuracy[mode][epoch+1]:.4f}\n")
 
                 # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
-                if (mode == "val") and (self.epochAccuracy[mode][epoch] > bestAcc):
+                if (mode == "val") and (self.epochAccuracy[mode][epoch+1] > bestAcc):
                     print("\n--- Model Performance Improved: Saving Weights ---\n")
                     torch.save(self.model.state_dict(), self.save_model_attributes_path + f"-epoch_{epoch}.pth")
                     bestAcc = epochAccuracy
@@ -315,6 +315,6 @@ class ModelTrain:
     def train_val_data_prep(self):
         train_images = ImagesAndLabels(self.train_data_path).append_images_and_labels()
         train_df = pd.DataFrame(train_images, columns=['ImageName', 'Label'])
-        train_data, val_data = train_test_split(train_df, test_size=self)
+        train_data, val_data = train_test_split(train_df, test_size=self.trainValSplit)
         train_data, val_data = train_data.reset_index(), val_data.reset_index()
         return train_data, val_data
