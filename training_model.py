@@ -7,7 +7,7 @@ import copy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 
 import torch
 from PIL import Image
@@ -61,10 +61,14 @@ class SandingCanopyDataset(Dataset):
     """ Convert images and labels to pytorch dataset """
     def __init__(self, dataToDataset):
         self.data = dataToDataset
+        self.mean = [0.5, 0.5, 0.5]
+        self.std = [0.5, 0.5, 0.5]
         self.transformation = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
                                                   transforms.RandomVerticalFlip(p=0.5),
-                                                  transforms.ToTensor()])
-        self.convertToTensor = transforms.Compose([transforms.ToTensor()])
+                                                  transforms.ToTensor(),
+                                                  transforms.Normalize(mean=self.mean, std=self.std)])
+        self.convertToTensor = transforms.Compose([transforms.ToTensor(),
+                                                   transforms.Normalize(mean=self.mean, std=self.std)])
 
     def __len__(self):
         return len(self.data)
@@ -177,13 +181,13 @@ class ModelTrain:
         """
         modelAttributes = dict()
         modelAttributes["dataset"] = "DatasetForModel_v" + time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(os.path.getmtime(os.path.join(os.getcwd(), "data", "dataset_preparation", "dataset_for_model"))))
-        modelAttributes["model"] = self.model
-        modelAttributes["weights"] = self.weights
-        modelAttributes["loss"] = self.loss
-        modelAttributes["optimizer"] = self.optimizer
-        modelAttributes["model_lr_scheduler"] = self.model_lr_scheduler
-        modelAttributes["model_lr_scheduler_gamma"] = self.model_lr_scheduler_gamma
-        modelAttributes["classes"] = self.classes
+        modelAttributes["model"] = str(self.model)
+        modelAttributes["weights"] = str(self.weights)
+        modelAttributes["loss"] = str(self.loss)
+        modelAttributes["optimizer"] = str(self.optimizer)
+        modelAttributes["model_lr_scheduler"] = str(self.model_lr_scheduler)
+        modelAttributes["model_lr_scheduler_gamma"] = str(self.model_lr_scheduler_gamma)
+        modelAttributes["classes"] = str(self.classes)
 
         return modelAttributes, self.train_model()
 
@@ -220,6 +224,7 @@ class ModelTrain:
 
                 for batchIdx, (images, labels) in enumerate(self.dataLoaders[mode]):
                     # TRANSFER THE IMAGES AND CORRESPONDING LABELS TO GPU IF AVAILABLE
+                    images = (images - 127.5) / 127.5
                     images = images.to(self.device)
                     labels = labels.type(torch.LongTensor).to(self.device)
 
@@ -276,11 +281,11 @@ class ModelTrain:
                 # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
                 if (mode == "val") and (self.epochAccuracy[mode][epoch+1] > bestAcc):
                     print("\n--- Model Performance Improved: Saving Weights ---\n")
-                    torch.save(self.model.state_dict(), self.save_model_attributes_path + f"-epoch_{epoch}.pth")
+                    torch.save(self.model.state_dict(), os.path.join(self.save_model_attributes_path, f"weights_epoch_{epoch}.pth"))
                     bestAcc = epochAccuracy
                     bestModelWeights = copy.deepcopy(self.model.state_dict())
 
-        torch.save(bestModelWeights, self.save_model_attributes_path + "-best_weights.pth")
+        torch.save(bestModelWeights, os.path.join(self.save_model_attributes_path, f"best_weights.pth"))
 
         # EMPTY THE CUDA MEMORY AFTER TRAINING
         with torch.no_grad():

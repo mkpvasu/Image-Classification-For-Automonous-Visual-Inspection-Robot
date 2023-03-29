@@ -26,7 +26,8 @@ class ModelTest:
                                          self.micron)
 
         # CREATE A NEW TRAINING FOLDER EVERYTIME FOR TRAINING
-        self.trainingFolder = "model_training_" + dt.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        self.trainingFolder = "model_training_" + dt.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        os.mkdir(os.path.join(os.getcwd(), "model_attributes", self.micron, "next", self.trainingFolder))
 
         # DIRECTORY TO SAVE MODEL ATTRIBUTES
         self.save_model_attributes_path = os.path.join(os.getcwd(), "model_attributes", self.micron, "next",
@@ -53,6 +54,7 @@ class ModelTest:
         with torch.no_grad():
             for images, labels in testLoader:
                 # TRANSFER IMAGES TO GPU IF AVAILABLE FOR PREDICTIONS
+                images = (images - 127.5) / 127.5
                 images = images.to(self.device)
 
                 # OUTPUT PROBABILITIES FOR ALL CLASSES
@@ -78,7 +80,7 @@ class ModelTest:
         performanceAttributes["model_accuracy"] = modelAccuracy
         performanceAttributes["model_f1_score"] = modelF1Score
 
-        with open(os.path.join(self.save_model_attributes_path, "performance.json")) as saveFile:
+        with open(os.path.join(self.save_model_attributes_path, "performance.json"), "w") as saveFile:
             json.dump(performanceAttributes, saveFile, indent=2)
 
     def test_data_prep(self):
