@@ -131,7 +131,9 @@ class ModelTrain:
         # WEIGHTS INITIALIZATION FOR TRANSFER LEARNING
         self.weights = weights
         # MODEL
-        self.model = model(weights=self.weights)
+        self.given_model = model
+        # MODEL WITH TRANSFER LEARNING WEIGHTS
+        self.model = self.given_model(weights=self.weights)
         # LOSS FUNCTION
         self.loss = loss
         # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
@@ -179,6 +181,9 @@ class ModelTrain:
 
         # SAVE WEIGHTS OF MODEL IN RESPECTIVE FOLDERS
         self.save_model_attributes_path = save_model_attributes_path
+
+    def output_model(self):
+        return self.given_model
 
     def output_trained_model(self):
         """
@@ -292,7 +297,8 @@ class ModelTrain:
                 # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
                 if (mode == "val") and (self.epoch_accuracy[mode][epoch+1] > best_accuracy):
                     print("\n--- Model Performance Improved: Saving Weights ---\n")
-                    torch.save(self.model.state_dict(), os.path.join(self.save_model_attributes_path, f"weights_epoch_{epoch}.pth"))
+                    torch.save(self.model.state_dict(), os.path.join(self.save_model_attributes_path,
+                                                                     f"weights_epoch_{epoch}.pth"))
                     best_accuracy = epoch_accuracy
                     best_model_weights = copy.deepcopy(self.model.state_dict())
 
