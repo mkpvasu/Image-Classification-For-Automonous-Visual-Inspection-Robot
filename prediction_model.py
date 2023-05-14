@@ -46,11 +46,11 @@ class PredictionDataset(Dataset):
 
 
 class ModelPredict:
-    def __init__(self, prediction_images_path, current_model, best_weights_path, batch_size=64):
+    def __init__(self, prediction_images_path, model, best_weights_path, batch_size=64):
         super().__init__()
         self.prediction_images_path = prediction_images_path
         self.batch_size = batch_size
-        self.current_model = current_model
+        self.current_model = model
         self.best_weights_path = best_weights_path
 
     def check_paths(self):
@@ -63,15 +63,15 @@ class ModelPredict:
     def prepare_data(self):
         prediction_data_df = LoadImages(self.prediction_images_path).load_images_as_dataframe()
         prediction_dataset = PredictionDataset(prediction_data_df)
-        prediction_loader = DataLoader(prediction_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4)
+        prediction_loader = DataLoader(prediction_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2)
         return prediction_data_df, prediction_loader
 
     def predict_images(self):
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         prediction_data_df, prediction_loader = self.prepare_data()
         prediction_results = []
-        current_model = self.current_model.load_state_dict(torch.load(self.best_weights_path, device))
-        current_model.to(device)
+        current_model = self.current_model
+        current_model.load_state_dict(torch.load(self.best_weights_path, device))
         current_model.eval()
 
         for images in prediction_loader:
@@ -100,11 +100,11 @@ def main():
                                           "20_micron")
     best_weights_path = os.path.join(os.getcwd(), "model_attributes", "20_micron", "current", "best_weights",
                                      "best_weights.pth")
-    current_model = resnet50
+    current_model = resnet50()
     # current_model = ModelTrain().output_model()
 
     ModelPredict(prediction_images_path=prediction_images_path,
-                 current_model=current_model,
+                 model=current_model,
                  best_weights_path=best_weights_path).classify_images_and_save_predictions()
 
 
