@@ -159,11 +159,13 @@ class ModelTrain:
         self.train_data_path = train_data_path
         # WEIGHTS INITIALIZATION FOR TRANSFER LEARNING
         self.weights = weights
+        # FREEZE WEIGHTS
+        self.freeze_weights = freeze_weights
         # CATEGORICAL ENCODING OF CLASSES
         self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
         # MODEL WITH TRANSFER LEARNING WEIGHTS
         self.model = Model(model=model, weights=self.weights, classes=self.classes,
-                           freeze_weights=freeze_weights).output_model()
+                           freeze_weights=self.freeze_weights).output_model()
         # LOSS FUNCTION
         self.loss = loss
         # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
@@ -222,6 +224,9 @@ class ModelTrain:
                                           os.path.getmtime(os.path.join(os.getcwd(), "data", "dataset_preparation",
                                                                         "dataset_for_model"))))
         trained_model = self.train_model()
+        model_attributes["train_data_path"] = str(self.train_data_path)
+        model_attributes["save_model_attributes_path"] = str(self.save_model_attributes_path)
+        model_attributes["micron"] = str(self.micron)
         model_attributes["model"] = str(trained_model)
         model_attributes["weights"] = str(self.weights)
         model_attributes["loss"] = str(self.loss)
@@ -229,8 +234,12 @@ class ModelTrain:
         model_attributes["optimizer_lr"] = float(self.optimizer_lr)
         model_attributes["model_lr_scheduler"] = str(self.model_lr_scheduler)
         model_attributes["model_lr_scheduler_gamma"] = float(self.model_lr_scheduler_gamma)
-        model_attributes["classes"] = str(self.classes)
+        model_attributes["num_epochs"] = int(self.n_epochs)
         model_attributes["batch_size"] = int(self.batchSize)
+        model_attributes["num_workers"] = int(self.num_workers)
+        model_attributes["train_val_split"] = float(self.train_val_split)
+        model_attributes["freeze_weights"] = str(self.freeze_weights)
+        model_attributes["classes"] = str(self.classes)
 
         return model_attributes, trained_model
 

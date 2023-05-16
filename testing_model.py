@@ -117,6 +117,8 @@ class ModelTest:
 
         # IMPORTANT FEATURES OF MODEL TO BE SAVED
         # performance_attributes["predictions"] = images_and_predictions
+        performance_attributes["test_batch_size"] = int(self.batch_size)
+        performance_attributes["test_num_workers"] = int(self.num_workers)
         performance_attributes["model_accuracy"] = float(model_accuracy)
         performance_attributes["model_f1_score"] = model_f1_score
 
