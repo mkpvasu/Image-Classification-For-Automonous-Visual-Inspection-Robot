@@ -1,7 +1,6 @@
 import os
 import glob
 import json
-import copy
 import pandas as pd
 from PIL import Image
 
@@ -46,7 +45,7 @@ class PredictionDataset(Dataset):
 
 
 class ModelPredict:
-    def __init__(self, prediction_images_path, model, best_weights_path, batch_size=64):
+    def __init__(self, prediction_images_path, model, best_weights_path, batch_size=8):
         super().__init__()
         self.prediction_images_path = prediction_images_path
         self.batch_size = batch_size
@@ -78,6 +77,7 @@ class ModelPredict:
             images = images.to(device)
             with torch.no_grad():
                 outputs = current_model(images)
+                print(outputs)
                 _, predictions = torch.max(outputs, dim=1)
                 predictions_output = predictions.cpu().detach().numpy()
             for prediction in predictions_output:

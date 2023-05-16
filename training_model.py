@@ -130,10 +130,10 @@ class ModelTrain:
         self.train_data_path = train_data_path
         # WEIGHTS INITIALIZATION FOR TRANSFER LEARNING
         self.weights = weights
-        # MODEL
-        self.given_model = model
         # MODEL WITH TRANSFER LEARNING WEIGHTS
-        self.model = self.given_model(weights=self.weights)
+        self.model = model(weights=self.weights)
+        # SAVE MODEL ARCHITECTURE
+        self.given_model = None
         # LOSS FUNCTION
         self.loss = loss
         # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
@@ -207,12 +207,24 @@ class ModelTrain:
 
         return model_attributes, self.train_model()
 
+    # FREEZE THE WEIGHTS OF ALL LAYERS EXCEPT FC AND UPDATE ONLY ITS WEIGHTS
+    def set_parameter_requires_grad(self, freeze_weights):
+        if freeze_weights:
+            for param in self.model.parameters():
+                param.requires_grad = False
+
     def train_model(self):
         """
         Train image classification model depending on input arguments specified by the user
         Returns:
             model: trained deep learning model
         """
+        # REINITIALIZE FINAL LAYER TO HAVE 3 CLASSES INSTEAD OF 1000 IN DEFAULT RESNET50
+        self.set_parameter_requires_grad(freeze_weights=True)
+        in_features = self.model.fc.in_features
+        num_classes = len(self.classes)
+        self.model.fc = nn.Linear(in_features=in_features, out_features=num_classes)
+        self.given_model = self.model
 
         # TO ANALYZE THE DURATION OF TRAINING MODEL
         start_time = time.time()

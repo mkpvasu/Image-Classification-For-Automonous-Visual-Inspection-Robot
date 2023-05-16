@@ -13,18 +13,17 @@ from training_model import ImagesAndLabels, SandingCanopyDataset, ModelTrain
 
 
 class ModelTest:
-    def __init__(self, micron, batch_size=4, num_workers=2):
+    def __init__(self, micron, batch_size=4, n_epochs=5, num_workers=2):
         # SELECT GPU IF AVAILABLE ELSE RUN IN CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
         # DEFINE BATCH SIZE FOR DATALOADER
         self.batch_size = batch_size
-
         # DEFINE NUMBER OF WORKERS FOR DATALOADER
         self.num_workers = num_workers
-
         # DEFINE MICRON FOR MODEL TO BE TRAINED
         self.micron = micron
+        # EPOCHS
+        self.n_epochs = n_epochs
 
         # CHANGE TEST DATA PATH ACCORDING TO MICRON SIZE
         self.train_data_path = os.path.join(os.getcwd(), "data", "dataset_preparation", "dataset_for_model", 
@@ -43,7 +42,7 @@ class ModelTest:
         # TRAIN DEEP LEARNING MODEL
         self.model_attributes, self.trained_model = \
             ModelTrain(train_data_path=self.train_data_path, save_model_attributes_path=self.save_model_attributes_path,
-                       micron="20_micron", n_epochs=1, batch_size=self.batch_size).output_trained_model()
+                       micron=self.micron, n_epochs=self.n_epochs, batch_size=self.batch_size).output_trained_model()
 
     def create_training_dir(self):
         training_dir = os.path.join(os.getcwd(), "model_attributes", self.micron, "next", self.training_folder)
@@ -108,7 +107,7 @@ class ModelTest:
         performance_attributes = self.model_attributes
 
         # IMPORTANT FEATURES OF MODEL TO BE SAVED
-        performance_attributes["predictions"] = images_and_predictions
+        # performance_attributes["predictions"] = images_and_predictions
         performance_attributes["model_accuracy"] = float(model_accuracy)
         performance_attributes["model_f1_score"] = model_f1_score
 
@@ -122,7 +121,7 @@ class ModelTest:
 
 
 def main():
-    ModelTest(micron="20_micron").save_model_features()
+    ModelTest(micron="20_micron", n_epochs=3).save_model_features()
 
 
 if __name__ == "__main__":

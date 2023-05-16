@@ -4,7 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4f511302-b9b3-4ae6-88e8-3a724c00b729" name="Changes" comment="" />
+    <list default="true" id="4f511302-b9b3-4ae6-88e8-3a724c00b729" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/model_attributes/10_micron/next/model_training_2023-05-15_145225/accuracy_curve.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model_attributes/10_micron/next/model_training_2023-05-15_145225/best_weights.pth" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model_attributes/10_micron/next/model_training_2023-05-15_145225/loss_curve.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model_attributes/10_micron/next/model_training_2023-05-15_145225/performance.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model_attributes/10_micron/next/model_training_2023-05-15_145225/weights_epoch_2.pth" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model_attributes/5_micron/next/model_training_2023-05-15_162603/weights_epoch_0.pth" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prediction_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/prediction_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/training_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/training_model.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
