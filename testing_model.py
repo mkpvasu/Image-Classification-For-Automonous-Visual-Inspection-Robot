@@ -13,6 +13,7 @@ from training_model import ImagesAndLabels, SandingCanopyDataset, ModelTrain
 
 
 class ModelTest:
+    """Class for testing the trained model"""
     def __init__(self, micron, batch_size=4, n_epochs=5, num_workers=2):
         # SELECT GPU IF AVAILABLE ELSE RUN IN CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -42,15 +43,20 @@ class ModelTest:
         # TRAIN DEEP LEARNING MODEL
         self.model_attributes, self.trained_model = \
             ModelTrain(train_data_path=self.train_data_path, save_model_attributes_path=self.save_model_attributes_path,
-                       micron=self.micron, n_epochs=self.n_epochs, batch_size=self.batch_size).output_trained_model()
+                       micron=self.micron, n_epochs=self.n_epochs, batch_size=self.batch_size,
+                       freeze_weights=True).output_trained_model()
 
     def create_training_dir(self):
+        """
+        Creates a new directory in the training_dir folder path at each time of training to save the model features
+        """
         training_dir = os.path.join(os.getcwd(), "model_attributes", self.micron, "next", self.training_folder)
         if not os.path.exists(training_dir):
             os.makedirs(training_dir)
 
     # TEST TRAINED MODEL WITH TESTING DATA AND TAKE THE TEST ACCURACY FOR FINAL MODEL PERFORMANCE
     def model_test_set_accuracy(self):
+        """Calculate the test accuracy and f1 score for the trained model"""
         # CONVERT IMAGES AND LABELS TO LOADABLE DATASET FOR MODEL
         test_data_to_dataset = self.test_data_prep()
         test_data = SandingCanopyDataset(test_data_to_dataset)
@@ -102,6 +108,7 @@ class ModelTest:
         return test_accuracy, test_f1_score, images_and_predictions
 
     def save_model_features(self):
+        """Saving all model related attributes for current training in case of reproduction"""
         model_accuracy, model_f1_score, images_and_predictions = self.model_test_set_accuracy()
         # print(model_f1_score)
         performance_attributes = self.model_attributes
@@ -115,13 +122,14 @@ class ModelTest:
             json.dump(performance_attributes, saveFile, indent=2)
 
     def test_data_prep(self):
+        """Converting all test images to pandas dataframe for PyTorch Dataset class"""
         test_images = ImagesAndLabels(self.test_data_path).append_images_and_labels()
         test_data = pd.DataFrame(test_images, columns=["ImageName", "Label"])
         return test_data
 
 
 def main():
-    ModelTest(micron="20_micron", n_epochs=3).save_model_features()
+    ModelTest(micron="20_micron", n_epochs=10).save_model_features()
 
 
 if __name__ == "__main__":

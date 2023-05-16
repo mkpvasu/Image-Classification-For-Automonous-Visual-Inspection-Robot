@@ -7,7 +7,7 @@ import copy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 
 import torch
 from PIL import Image
@@ -20,9 +20,7 @@ from torch.optim import lr_scheduler
 
 
 class InvalidLabel(Exception):
-    """
-    Exception raised when label is None for assigning to an image
-    """
+    """ Exception raised when label is None for assigning to an image """
     def __init__(self):
         self.message = "Label cannot be None"
         super().__init__(self.message)
@@ -68,8 +66,8 @@ class SandingCanopyDataset(Dataset):
                                                   transforms.RandomHorizontalFlip(p=0.5),
                                                   transforms.RandomVerticalFlip(p=0.5), transforms.ToTensor(),
                                                   transforms.Normalize(mean=self.mean, std=self.std)])
-        self.simple_transformation = transforms.Compose([transforms.Resize((1056, 1056),
-                                                                           interpolation=transforms.InterpolationMode.BICUBIC),
+        self.simple_transformation = transforms.Compose([transforms.Resize((1056, 1056), interpolation=transforms.
+                                                                           InterpolationMode.BICUBIC),
                                                          transforms.ToTensor(),
                                                          transforms.Normalize(mean=self.mean, std=self.std)])
 
@@ -102,9 +100,7 @@ class LoaderVisualization:
 
     # DISPLAY IMAGES IN THE DATALOADER WITH LABELS
     def img_and_label_visualization(self):
-        """
-        To display images and its labels present in the dataloader
-        """
+        """ To display images and its labels present in the dataloader """
         dataiter = iter(self.dataLoader)
         images, labels = next(dataiter)
         # Viewing data examples used for training
@@ -118,10 +114,10 @@ class LoaderVisualization:
 
 class ModelTrain:
     """ To train the ResNet50 model using the custom prepared sub-images dataset """
-    def __init__(self, train_data_path, save_model_attributes_path, micron, model=resnet50, weights=ResNet50_Weights.IMAGENET1K_V2,
-                 loss=nn.CrossEntropyLoss(), optimizer=optim.Adam, model_lr_scheduler=lr_scheduler.ExponentialLR,
-                 optimizer_lr=0.005, model_lr_scheduler_gamma=0.95, n_epochs=5, batch_size=64, num_workers=2,
-                 train_val_split=0.2):
+    def __init__(self, train_data_path, save_model_attributes_path, micron, model=resnet50,
+                 weights=ResNet50_Weights.IMAGENET1K_V2, loss=nn.CrossEntropyLoss(), optimizer=optim.Adam,
+                 model_lr_scheduler=lr_scheduler.ExponentialLR, optimizer_lr=0.005, model_lr_scheduler_gamma=0.95,
+                 n_epochs=5, batch_size=64, num_workers=2, train_val_split=0.2, freeze_weights=False):
 
         # ASSIGN INPUTS TO INSTANCE VARIABLES
         # MICRON OF SANDING TO BE TRAINED
@@ -133,7 +129,7 @@ class ModelTrain:
         # MODEL WITH TRANSFER LEARNING WEIGHTS
         self.model = model(weights=self.weights)
         # SAVE MODEL ARCHITECTURE
-        self.given_model = None
+        self.updated_model = None
         # LOSS FUNCTION
         self.loss = loss
         # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
@@ -151,6 +147,8 @@ class ModelTrain:
         self.train_val_split = train_val_split
         # NUMBER OF WORKERS FOR DATALOADER
         self.num_workers = num_workers
+        # WHETHER TO FREEZE WEIGHTS OF THE PRETRAINED MODEL
+        self.freeze_weights = freeze_weights
 
         # SELECT GPU IF AVAILABLE ELSE CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -183,7 +181,8 @@ class ModelTrain:
         self.save_model_attributes_path = save_model_attributes_path
 
     def output_model(self):
-        return self.given_model
+        self.update_model_fc()
+        return self.updated_model
 
     def output_trained_model(self):
         """
@@ -194,7 +193,9 @@ class ModelTrain:
         """
         model_attributes = dict()
         model_attributes["dataset"] = "DatasetForModel_v" + \
-                                      time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(os.path.getmtime(os.path.join(os.getcwd(), "data", "dataset_preparation", "dataset_for_model"))))
+                                      time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(
+                                          os.path.getmtime(os.path.join(os.getcwd(), "data", "dataset_preparation",
+                                                                        "dataset_for_model"))))
         model_attributes["model"] = str(self.model)
         model_attributes["weights"] = str(self.weights)
         model_attributes["loss"] = str(self.loss)
@@ -209,9 +210,25 @@ class ModelTrain:
 
     # FREEZE THE WEIGHTS OF ALL LAYERS EXCEPT FC AND UPDATE ONLY FC WEIGHTS
     def set_parameter_requires_grad(self, freeze_weights):
+        """
+        Sets all layer parameters has to be updated by optimizer if false else only fc parameters will be updated
+        Args:
+            freeze_weights: bool
+        """
         if freeze_weights:
             for param in self.model.parameters():
                 param.requires_grad = False
+
+    def update_model(self):
+        """ Update final fc to the number of output classes and freeze pretrained weights if necessary """
+        # IF FINE TUNING MODEL SET FREEZE WEIGHTS = FALSE
+        # ELIF USING EXTRACTED FEATURES (FEATURE EXTRACTING) SET FREEZE WEIGHT = TRUE (ONLY LEARNS FC LAYER WEIGHTS)
+        self.set_parameter_requires_grad(freeze_weights=self.freeze_weights)
+
+        # REINITIALIZE FINAL LAYER TO HAVE NUMBER OF CURRENT CLASSES INSTEAD OF 1000 CLASSES IN DEFAULT RESNET50
+        in_features, num_classes = self.model.fc.in_features, len(self.classes)
+        self.model.fc = nn.Linear(in_features=in_features, out_features=num_classes)
+        self.updated_model = self.model
 
     def train_model(self):
         """
@@ -219,14 +236,8 @@ class ModelTrain:
         Returns:
             model: trained deep learning model
         """
-        # IF FINE TUNING MODEL SET FREEZE WEIGHTS = FALSE
-        # ELIF USING EXTRACTED FEATURES (FEATURE EXTRACTING) SET FREEZE WEIGHT = TRUE (ONLY LEARNS FC LAYER WEIGHTS)
-        self.set_parameter_requires_grad(freeze_weights=True)
-
-        # REINITIALIZE FINAL LAYER TO HAVE NUMBER OF CURRENT CLASSES INSTEAD OF 1000 CLASSES IN DEFAULT RESNET50
-        in_features, num_classes = self.model.fc.in_features, len(self.classes)
-        self.model.fc = nn.Linear(in_features=in_features, out_features=num_classes)
-        self.given_model = self.model
+        # TO REPLACE FINAL FC LAYER FOR CURRENT REQUIREMENTS
+        self.update_model()
 
         # TO ANALYZE THE DURATION OF TRAINING MODEL
         start_time = time.time()
@@ -305,7 +316,8 @@ class ModelTrain:
                 else:
                     phase = "Validation"
 
-                print(f"\n--------------------- {phase} ---------------------\nEpoch Loss: {self.epoch_loss[mode][epoch+1]:.4f}, "
+                print(f"\n--------------------- {phase} ---------------------\nEpoch Loss: "
+                      f"{self.epoch_loss[mode][epoch+1]:.4f}, "
                       f"Epoch Accuracy: {self.epoch_accuracy[mode][epoch+1]:.4f}\n")
 
                 # UPDATE BEST MODEL WEIGHTS FOR EPOCHS WITH IMPROVED VALIDATION ACCURACY AND SAVE ITS WEIGHTS
