@@ -8,8 +8,7 @@ import torch
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 
-# from training_model import ModelTrain
-from torch import nn
+from training_model import Model
 from torchvision.models import resnet50
 
 
@@ -112,10 +111,10 @@ def main():
                                           "20_micron")
     best_weights_path = os.path.join(os.getcwd(), "model_attributes", "20_micron", "current", "best_weights",
                                      "best_weights.pth")
-    current_model = resnet50()
+    classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
+    current_model = Model(model=resnet50, classes=classes, weights=None, freeze_weights=False).output_model()
 
-    ModelPredict(prediction_images_path=prediction_images_path,
-                 model=current_model,
+    ModelPredict(prediction_images_path=prediction_images_path, model=current_model,
                  best_weights_path=best_weights_path).classify_images_and_save_predictions()
 
 

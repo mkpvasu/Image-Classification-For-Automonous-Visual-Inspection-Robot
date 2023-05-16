@@ -14,7 +14,7 @@ from training_model import ImagesAndLabels, SandingCanopyDataset, ModelTrain
 
 class ModelTest:
     """Class for testing the trained model"""
-    def __init__(self, micron, batch_size=4, n_epochs=5, num_workers=2):
+    def __init__(self, micron, batch_size=4, n_epochs=5, num_workers=2, freeze_weights=False):
         # SELECT GPU IF AVAILABLE ELSE RUN IN CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # DEFINE BATCH SIZE FOR DATALOADER
@@ -25,6 +25,8 @@ class ModelTest:
         self.micron = micron
         # EPOCHS
         self.n_epochs = n_epochs
+        # FREEZE WEIGHTS
+        self.freeze_weights = freeze_weights
 
         # CHANGE TEST DATA PATH ACCORDING TO MICRON SIZE
         self.train_data_path = os.path.join(os.getcwd(), "data", "dataset_preparation", "dataset_for_model", 
@@ -44,7 +46,7 @@ class ModelTest:
         self.model_attributes, self.trained_model = \
             ModelTrain(train_data_path=self.train_data_path, save_model_attributes_path=self.save_model_attributes_path,
                        micron=self.micron, n_epochs=self.n_epochs, batch_size=self.batch_size,
-                       freeze_weights=True).output_trained_model()
+                       freeze_weights=self.freeze_weights).output_trained_model()
 
     def create_training_dir(self):
         """
@@ -129,7 +131,7 @@ class ModelTest:
 
 
 def main():
-    ModelTest(micron="20_micron", n_epochs=10).save_model_features()
+    ModelTest(micron="5_micron", n_epochs=10).save_model_features()
 
 
 if __name__ == "__main__":

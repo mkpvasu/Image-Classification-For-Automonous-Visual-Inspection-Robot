@@ -112,6 +112,39 @@ class LoaderVisualization:
         plt.show()
 
 
+# UPDATE MODEL FOR CURRENT NECESSITIES IF NECESSARY
+class Model:
+    def __init__(self, model, classes, weights=None, freeze_weights=False):
+        self.weights = weights
+        self.model = model(weights=self.weights)
+        self.freeze_weights = freeze_weights
+        self.num_classes = len(classes)
+
+    # UPDATE DEFAULT RESNET50 MODEL TO THE REQUIREMENTS AND OUTPUT THE CUSTOM MODEL
+    def output_model(self):
+        self.update_model()
+        return self.model
+
+    # FREEZE THE WEIGHTS OF ALL LAYERS EXCEPT FC AND UPDATE ONLY FC WEIGHTS
+    def set_parameter_requires_grad(self):
+        """ Sets all layer parameters has to be updated by optimizer if false else only fc parameters will be updated
+        """
+        if self.freeze_weights:
+            for param in self.model.parameters():
+                param.requires_grad = False
+
+    # TO REPLACE FINAL FC LAYER FOR CURRENT REQUIREMENTS
+    def update_model(self):
+        """ Update final fc to the number of output classes and freeze pretrained weights if necessary """
+        # IF FINE TUNING MODEL SET FREEZE WEIGHTS = FALSE
+        # ELIF USING EXTRACTED FEATURES (FEATURE EXTRACTING) SET FREEZE WEIGHT = TRUE (ONLY LEARNS FC LAYER WEIGHTS)
+        self.set_parameter_requires_grad()
+
+        # REINITIALIZE FINAL LAYER TO HAVE NUMBER OF CURRENT CLASSES INSTEAD OF 1000 CLASSES IN DEFAULT RESNET50
+        in_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(in_features=in_features, out_features=self.num_classes)
+
+
 class ModelTrain:
     """ To train the ResNet50 model using the custom prepared sub-images dataset """
     def __init__(self, train_data_path, save_model_attributes_path, micron, model=resnet50,
@@ -126,10 +159,11 @@ class ModelTrain:
         self.train_data_path = train_data_path
         # WEIGHTS INITIALIZATION FOR TRANSFER LEARNING
         self.weights = weights
+        # CATEGORICAL ENCODING OF CLASSES
+        self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
         # MODEL WITH TRANSFER LEARNING WEIGHTS
-        self.model = model(weights=self.weights)
-        # SAVE MODEL ARCHITECTURE
-        self.updated_model = None
+        self.model = Model(model=model, weights=self.weights, classes=self.classes,
+                           freeze_weights=freeze_weights).output_model()
         # LOSS FUNCTION
         self.loss = loss
         # OPTIMIZER FUNCTION TO UPDATE WEIGHTS
@@ -147,8 +181,6 @@ class ModelTrain:
         self.train_val_split = train_val_split
         # NUMBER OF WORKERS FOR DATALOADER
         self.num_workers = num_workers
-        # WHETHER TO FREEZE WEIGHTS OF THE PRETRAINED MODEL
-        self.freeze_weights = freeze_weights
 
         # SELECT GPU IF AVAILABLE ELSE CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -167,9 +199,6 @@ class ModelTrain:
                                      num_workers=self.num_workers)
         self.data_loaders = {"train": self.train_loader, "val": self.val_loader}
 
-        # CATEGORICAL ENCODING OF CLASSES
-        self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
-
         # TRACK LOSS AND ACCURACY FOR EACH EPOCH
         self.epoch_loss = {"train": {}, "val": {}}
         self.epoch_accuracy = {"train": {}, "val": {}}
@@ -180,13 +209,9 @@ class ModelTrain:
         # SAVE WEIGHTS OF MODEL IN RESPECTIVE FOLDERS
         self.save_model_attributes_path = save_model_attributes_path
 
-    def output_model(self):
-        self.update_model_fc()
-        return self.updated_model
-
     def output_trained_model(self):
         """
-        Outputs trained model
+        Saves all model parameters in a dict to be copied to a JSON file for reproduction
 
         Returns:
             self.trainModel: trained model
@@ -196,7 +221,8 @@ class ModelTrain:
                                       time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(
                                           os.path.getmtime(os.path.join(os.getcwd(), "data", "dataset_preparation",
                                                                         "dataset_for_model"))))
-        model_attributes["model"] = str(self.model)
+        trained_model = self.train_model()
+        model_attributes["model"] = str(trained_model)
         model_attributes["weights"] = str(self.weights)
         model_attributes["loss"] = str(self.loss)
         model_attributes["optimizer"] = str(self.optimizer)
@@ -206,29 +232,7 @@ class ModelTrain:
         model_attributes["classes"] = str(self.classes)
         model_attributes["batch_size"] = int(self.batchSize)
 
-        return model_attributes, self.train_model()
-
-    # FREEZE THE WEIGHTS OF ALL LAYERS EXCEPT FC AND UPDATE ONLY FC WEIGHTS
-    def set_parameter_requires_grad(self, freeze_weights):
-        """
-        Sets all layer parameters has to be updated by optimizer if false else only fc parameters will be updated
-        Args:
-            freeze_weights: bool
-        """
-        if freeze_weights:
-            for param in self.model.parameters():
-                param.requires_grad = False
-
-    def update_model(self):
-        """ Update final fc to the number of output classes and freeze pretrained weights if necessary """
-        # IF FINE TUNING MODEL SET FREEZE WEIGHTS = FALSE
-        # ELIF USING EXTRACTED FEATURES (FEATURE EXTRACTING) SET FREEZE WEIGHT = TRUE (ONLY LEARNS FC LAYER WEIGHTS)
-        self.set_parameter_requires_grad(freeze_weights=self.freeze_weights)
-
-        # REINITIALIZE FINAL LAYER TO HAVE NUMBER OF CURRENT CLASSES INSTEAD OF 1000 CLASSES IN DEFAULT RESNET50
-        in_features, num_classes = self.model.fc.in_features, len(self.classes)
-        self.model.fc = nn.Linear(in_features=in_features, out_features=num_classes)
-        self.updated_model = self.model
+        return model_attributes, trained_model
 
     def train_model(self):
         """
@@ -236,8 +240,6 @@ class ModelTrain:
         Returns:
             model: trained deep learning model
         """
-        # TO REPLACE FINAL FC LAYER FOR CURRENT REQUIREMENTS
-        self.update_model()
 
         # TO ANALYZE THE DURATION OF TRAINING MODEL
         start_time = time.time()
