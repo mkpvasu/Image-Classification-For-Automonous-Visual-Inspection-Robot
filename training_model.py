@@ -207,7 +207,7 @@ class ModelTrain:
 
         return model_attributes, self.train_model()
 
-    # FREEZE THE WEIGHTS OF ALL LAYERS EXCEPT FC AND UPDATE ONLY ITS WEIGHTS
+    # FREEZE THE WEIGHTS OF ALL LAYERS EXCEPT FC AND UPDATE ONLY FC WEIGHTS
     def set_parameter_requires_grad(self, freeze_weights):
         if freeze_weights:
             for param in self.model.parameters():
@@ -219,10 +219,12 @@ class ModelTrain:
         Returns:
             model: trained deep learning model
         """
-        # REINITIALIZE FINAL LAYER TO HAVE 3 CLASSES INSTEAD OF 1000 IN DEFAULT RESNET50
+        # IF FINE TUNING MODEL SET FREEZE WEIGHTS = FALSE
+        # ELIF USING EXTRACTED FEATURES (FEATURE EXTRACTING) SET FREEZE WEIGHT = TRUE (ONLY LEARNS FC LAYER WEIGHTS)
         self.set_parameter_requires_grad(freeze_weights=True)
-        in_features = self.model.fc.in_features
-        num_classes = len(self.classes)
+
+        # REINITIALIZE FINAL LAYER TO HAVE NUMBER OF CURRENT CLASSES INSTEAD OF 1000 CLASSES IN DEFAULT RESNET50
+        in_features, num_classes = self.model.fc.in_features, len(self.classes)
         self.model.fc = nn.Linear(in_features=in_features, out_features=num_classes)
         self.given_model = self.model
 
@@ -350,6 +352,7 @@ class ModelTrain:
                 plt.xlabel("# of Epochs")
                 plt.ylabel("Epoch Accuracy")
                 plt.title("Training and Validation Accuracy vs Epochs")
+                plt.legend()
                 plt.savefig(os.path.join(self.save_model_attributes_path, "accuracy_curve.png"), bbox_inches="tight")
             plt.close()
 
