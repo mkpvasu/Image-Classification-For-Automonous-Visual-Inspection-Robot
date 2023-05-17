@@ -80,14 +80,14 @@ class ModelPredict:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         prediction_data_df, prediction_loader = self.prepare_data()
         prediction_results = []
-        self.model.load_state_dict(torch.load(self.best_weights_path, device))
+        self.model.to(device)
+        self.model.load_state_dict(torch.load(self.best_weights_path))
         self.model.eval()
 
         for images in prediction_loader:
             images = images.to(device)
             with torch.no_grad():
                 outputs = self.model(images)
-                print(outputs)
                 _, predictions = torch.max(outputs, dim=1)
                 predictions_output = predictions.cpu().detach().numpy()
             for prediction in predictions_output:
@@ -98,7 +98,7 @@ class ModelPredict:
 
         return predictions_dict
 
-    def classify_images_and_save_predictions(self):
+    def classify_and_save_predictions(self):
         """ Save images and corresponding predictions in a JSON file in the same folder"""
         self.check_paths()
         predictions_dict = self.predict_images()
@@ -115,7 +115,7 @@ def main():
     current_model = Model(model=resnet50, classes=classes, weights=None, freeze_weights=False).output_model()
 
     ModelPredict(prediction_images_path=prediction_images_path, model=current_model,
-                 best_weights_path=best_weights_path).classify_images_and_save_predictions()
+                 best_weights_path=best_weights_path).classify_and_save_predictions()
 
 
 if __name__ == "__main__":
