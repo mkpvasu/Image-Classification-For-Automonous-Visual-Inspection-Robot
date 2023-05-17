@@ -163,6 +163,8 @@ class ModelTrain:
         self.freeze_weights = freeze_weights
         # CATEGORICAL ENCODING OF CLASSES
         self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
+        # SELECT GPU IF AVAILABLE ELSE CPU
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # MODEL WITH TRANSFER LEARNING WEIGHTS
         self.model = Model(model=model, weights=self.weights, classes=self.classes,
                            freeze_weights=self.freeze_weights).output_model()
@@ -183,9 +185,6 @@ class ModelTrain:
         self.train_val_split = train_val_split
         # NUMBER OF WORKERS FOR DATALOADER
         self.num_workers = num_workers
-
-        # SELECT GPU IF AVAILABLE ELSE CPU
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # PREPARATION OF TRAIN, VAL AND TEST DATA FOR DATASET CONVERSION
         self.train_data_to_dataset, self.val_data_to_dataset = self.train_val_data_prep()
@@ -249,6 +248,8 @@ class ModelTrain:
         Returns:
             model: trained deep learning model
         """
+        # MOVE MODEL TO GPU
+        self.model.to(self.device)
 
         # TO ANALYZE THE DURATION OF TRAINING MODEL
         start_time = time.time()
@@ -304,11 +305,11 @@ class ModelTrain:
                     # PRINT BATCH LOSS FOR EVERY 5 BATCHES IN A EPOCH
                     if (mode == "train") and (batchIdx % 5 == 0):
                         print(f"\nBatch [{batchIdx}/{len(self.data_loaders[mode])}]: Batch Loss: {loss.item():.4f}, "
-                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data)/len(labels)):.4f}")
+                              f"Batch Accuracy: {100 * (torch.sum(predictions == labels.data).item()/len(labels)):.4f}")
 
                     # CALCULATE TOTAL LOSS AND CORRECT PREDICTIONS OF EACH EPOCH
                     running_loss += loss.item() * images.size(0)
-                    running_corrects += torch.sum(predictions == labels.data)
+                    running_corrects += torch.sum(predictions == labels.data).item()
                     running_total += len(labels.data)
 
                 if self.model == "train":

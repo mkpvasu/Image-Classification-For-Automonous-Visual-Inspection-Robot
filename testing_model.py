@@ -14,7 +14,7 @@ from training_model import ImagesAndLabels, SandingCanopyDataset, ModelTrain
 
 class ModelTest:
     """Class for testing the trained model"""
-    def __init__(self, micron, batch_size=4, n_epochs=5, num_workers=2, freeze_weights=False):
+    def __init__(self, micron, batch_size=2, n_epochs=5, num_workers=2, freeze_weights=False):
         # SELECT GPU IF AVAILABLE ELSE RUN IN CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # DEFINE BATCH SIZE FOR DATALOADER
@@ -133,7 +133,7 @@ class ModelTest:
 
 
 def main():
-    ModelTest(micron="5_micron", n_epochs=10).save_model_features()
+    ModelTest(micron="20_micron", n_epochs=1).save_model_features()
 
 
 if __name__ == "__main__":
