@@ -44,15 +44,23 @@ class PredictionDataset(Dataset):
         return image
 
 
+class LoadModel:
+    def __init__(self, model):
+        self.classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
+        self.model = Model(model=model, classes=self.classes, weights=None, freeze_weights=False).output_model()
+
+    def output_model(self):
+        return self.model
+
+
 class ModelPredict:
     """Class to perform predictions on new data"""
-    def __init__(self, prediction_images_path, model, best_weights_path, batch_size=8):
+    def __init__(self, prediction_images_path, best_weights_path, model, batch_size=8):
         super().__init__()
         self.prediction_images_path = prediction_images_path
-        self.batch_size = batch_size
-        self.model = model
         self.best_weights_path = best_weights_path
-        self.num_classes = 3
+        self.model = LoadModel(model=model).output_model()
+        self.batch_size = batch_size
 
     def check_paths(self):
         """Check if prediction images and best weights path is valid"""
@@ -61,12 +69,6 @@ class ModelPredict:
 
         if not os.path.exists(self.best_weights_path):
             raise FileNotFoundError(f"{self.best_weights_path} doesn't exist")
-
-    def update_model_fc(self):
-        """ Update final fc to the number of output classes and freeze pretrained weights if necessary """
-        # REINITIALIZE FINAL LAYER TO HAVE NUMBER OF CURRENT CLASSES INSTEAD OF 1000 CLASSES IN DEFAULT RESNET50
-        in_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(in_features=in_features, out_features=self.num_classes)
 
     def prepare_data(self):
         """ Convert dataframe to PyTorch Dataset and DataLoader class """
@@ -99,7 +101,7 @@ class ModelPredict:
         return predictions_dict
 
     def classify_and_save_predictions(self):
-        """ Save images and corresponding predictions in a JSON file in the same folder"""
+        """ Save images and corresponding predictions in classifications JSON file in the prediction images folder"""
         self.check_paths()
         predictions_dict = self.predict_images()
         with open(os.path.join(self.prediction_images_path, "classifications.json"), "w") as file:
@@ -107,15 +109,14 @@ class ModelPredict:
 
 
 def main():
-    prediction_images_path = os.path.join(os.getcwd(), "data", "dataset_preparation", "test_prediction_data",
-                                          "20_micron")
-    best_weights_path = os.path.join(os.getcwd(), "model_attributes", "20_micron", "current", "best_weights",
-                                     "best_weights.pth")
-    classes = {0.0: "Bad", 1.0: "Marginal", 2.0: "Good"}
-    current_model = Model(model=resnet50, classes=classes, weights=None, freeze_weights=False).output_model()
+    micron = "20_micron"
+    prediction_images_path = os.path.join(os.getcwd(), "data", "dataset_preparation", "test_prediction_data", micron)
 
-    ModelPredict(prediction_images_path=prediction_images_path, model=current_model,
-                 best_weights_path=best_weights_path).classify_and_save_predictions()
+    # BEST WEIGHTS ARE RECOMMENDED TO STORE IN THE FOLLOWING PATH FOR EACH MICRON SIZE
+    best_weights_path = os.path.join(os.getcwd(), "model_attributes", micron, "current", "best_weights",
+                                     "best_weights.pth")
+    ModelPredict(prediction_images_path=prediction_images_path, best_weights_path=best_weights_path,
+                 model=resnet50).classify_and_save_predictions()
 
 
 if __name__ == "__main__":
