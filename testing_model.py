@@ -14,7 +14,7 @@ from training_model import ImagesAndLabels, SandingCanopyDataset, ModelTrain
 
 class ModelTest:
     """Class for testing the trained model"""
-    def __init__(self, micron, batch_size=2, n_epochs=5, num_workers=2, freeze_weights=False):
+    def __init__(self, micron, batch_size=3, n_epochs=5, num_workers=2, freeze_weights=False):
         # SELECT GPU IF AVAILABLE ELSE RUN IN CPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # DEFINE BATCH SIZE FOR DATALOADER
@@ -60,26 +60,27 @@ class ModelTest:
     def model_test_set_accuracy(self):
         """Calculate the test accuracy and f1 score for the trained model"""
         # CONVERT IMAGES AND LABELS TO LOADABLE DATASET FOR MODEL
-        test_data_to_dataset = self.test_data_prep()
-        test_data = SandingCanopyDataset(test_data_to_dataset)
+        test_dataset = self.test_data_prep()
+        test_data = SandingCanopyDataset(test_dataset)
         test_loader = DataLoader(dataset=test_data, batch_size=self.batch_size, shuffle=True,
                                  num_workers=self.num_workers)
 
-        image_names = []
-        prediction_vals = []
-        ground_truths = []
-        test_corrects = 0.0
-        test_data_size = len(test_data_to_dataset)
+        # image_names = []
+        prediction_labels = torch.tensor([], dtype=torch.float32, device=self.device)
+        ground_truths = torch.tensor([], dtype=torch.int8, device=self.device)
+        test_corrects = torch.tensor([0], dtype=torch.int32, device=self.device)
+        test_data_size = len(test_dataset)
 
         # CHANGE FROM TRAINING MODE TO EVALUATION MODE
         self.trained_model.eval()
 
         with torch.no_grad():
             for images, labels in test_loader:
-                image_names += images
+                # image_names += images
                 # TRANSFER NORMALIZED IMAGES TO GPU IF AVAILABLE FOR PREDICTIONS
                 images = (images - 127.5) / 127.5
                 images = images.to(self.device)
+                labels = labels.type(torch.LongTensor).to(self.device)
 
                 # OUTPUT PROBABILITIES FOR ALL CLASSES
                 outputs = self.trained_model(images)
@@ -88,30 +89,32 @@ class ModelTest:
                 _, predictions = torch.max(outputs, dim=1)
 
                 # SUM OF ALL CORRECT OUTPUTS
-                test_corrects += torch.sum(predictions == labels).item()
+                test_corrects = torch.add(test_corrects, torch.sum(predictions == labels.data))
 
                 # APPEND PREDICTIONS TO LIST
-                prediction_vals += predictions.tolist()
+                prediction_labels = torch.cat([prediction_labels, predictions], dim=0)
 
                 # APPEND GROUND TRUTHS TO LIST
-                ground_truths += labels.tolist()
+                ground_truths = torch.cat([ground_truths, labels], dim=0)
 
         # OVERALL TEST ACCURACY FOR THE TEST SET
-        test_accuracy = (100 * (test_corrects / test_data_size))
+        test_accuracy = (100 * (test_corrects.item() / test_data_size))
         # F1 SCORE OF ENTIRE TEST SET
-        test_f1_score = f1_score(ground_truths, prediction_vals, average="macro")
+        prediction_labels = prediction_labels.detach().cpu().numpy()
+        ground_truths = ground_truths.detach().cpu().numpy()
+        test_f1_score = f1_score(ground_truths, prediction_labels, average="macro")
         if isinstance(test_f1_score, np.ndarray):
             test_f1_score = np.ndarray.tolist(test_f1_score)
 
         # APPEND IMAGES, GROUND TRUTHS AND PREDICTIONS FOR EACH IMAGE FOR INSPECTION
-        images_and_predictions = list(zip(images, ground_truths, prediction_vals))
+        # images_and_predictions = list(zip(images, ground_truths, prediction_vals))
 
         torch.cuda.empty_cache()
-        return test_accuracy, test_f1_score, images_and_predictions
+        return test_accuracy, test_f1_score  # images_and_predictions
 
     def save_model_features(self):
-        """Saving all model related attributes for current training in case of reproduction"""
-        model_accuracy, model_f1_score, images_and_predictions = self.model_test_set_accuracy()
+        """ Saving all model related attributes for current training in case of reproduction """
+        model_accuracy, model_f1_score = self.model_test_set_accuracy()
         # print(model_f1_score)
         performance_attributes = self.model_attributes
 
@@ -133,7 +136,7 @@ class ModelTest:
 
 
 def main():
-    ModelTest(micron="20_micron", n_epochs=1).save_model_features()
+    ModelTest(micron="10_micron", n_epochs=10).save_model_features()
 
 
 if __name__ == "__main__":
